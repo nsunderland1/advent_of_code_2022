@@ -8,7 +8,7 @@ use itertools::Itertools;
 #[macro_export]
 macro_rules! grid {
     [$e:expr; $width:expr, $height:expr] => {
-        ::std::iter::repeat_with(|| ::std::iter::repeat($e).take($width))
+        ::core::iter::repeat_with(|| ::core::iter::repeat($e).take($width))
             .take($height)
             .collect::<$crate::grid::Grid<_>>()
     };

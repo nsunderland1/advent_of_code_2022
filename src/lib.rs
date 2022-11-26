@@ -3,7 +3,11 @@ use std::path::{Path, PathBuf};
 #[macro_use]
 mod grid;
 
-const DAY_TABLE: &[fn(&str)] = &[];
+pub mod prelude;
+
+mod day01;
+
+const DAY_TABLE: &[fn(&str)] = &[day01::run];
 
 /// Get the path to the input file for a given day
 pub fn get_input_file(day: u32) -> PathBuf {

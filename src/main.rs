@@ -5,9 +5,9 @@ use std::{
 
 use advent_of_code_2022::{get_input_file, run_day};
 use chrono::{Datelike, FixedOffset, Utc};
-use structopt::StructOpt;
+use clap::Parser;
 
-#[derive(StructOpt)]
+#[derive(Parser)]
 enum Options {
     All,
     Today,
@@ -43,7 +43,7 @@ impl Options {
 }
 
 fn main() {
-    let options = Options::from_args();
+    let options = Options::parse();
     let days = options.days();
 
     let mut total = Duration::ZERO;
