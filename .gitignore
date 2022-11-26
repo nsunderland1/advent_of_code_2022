@@ -11,3 +11,7 @@ Cargo.lock
 
 # AOC creator doesn't want input files being uploaded
 input
+
+# Flamegraph stuff
+./perf.data*
+./flamegraph.svg
