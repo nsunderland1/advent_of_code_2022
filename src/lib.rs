@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use itertools::Itertools;
 
@@ -27,9 +27,13 @@ pub fn run_day(day: u32, input: &str) -> (usize, usize) {
     DAY_TABLE[day as usize - 1](input)
 }
 
-pub fn get_expected_output(day: u32) -> (usize, usize) {
+pub fn output_file_path(day: u32) -> PathBuf {
     let crate_root = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let output_file = crate_root.join("output").join(format!("{day}.output"));
+    crate_root.join("output").join(format!("{day}.output"))
+}
+
+pub fn get_expected_output(day: u32) -> (usize, usize) {
+    let output_file = output_file_path(day);
     let file_contents =
         std::fs::read_to_string(output_file).expect("Could not read from output file");
 

@@ -1,6 +1,6 @@
 use std::time::{Duration, Instant};
 
-use advent_of_code_2022::{get_input, run_day};
+use advent_of_code_2022::{get_input, output_file_path, run_day};
 use chrono::{Datelike, FixedOffset, Utc};
 use clap::Parser;
 
@@ -9,6 +9,7 @@ enum Options {
     All,
     Today,
     Day { day: u32 },
+    Save { day: u32 },
 }
 
 fn current_day_december_2022() -> Option<u32> {
@@ -31,7 +32,7 @@ impl Options {
                     today.expect("This option only works from December 1st through 25th, 2022");
                 vec![today]
             }
-            Options::Day { day } => {
+            Options::Day { day } | Options::Save { day } => {
                 assert!(*day <= today.unwrap_or(25), "You can't run a future day!");
                 vec![*day]
             }
@@ -52,8 +53,14 @@ fn main() {
         let runtime = time.elapsed();
         println!("Part 1: {part1}");
         println!("Part 2: {part2}");
-        println!("Ran in {:?}", runtime);
+        println!("Ran in {runtime:?}");
         total += runtime;
+
+        if let Options::Save { .. } = options {
+            let output_file = output_file_path(day);
+            std::fs::write(output_file, format!("{part1} {part2}"))
+                .expect("Failed to write to output file");
+        }
     }
-    println!("Total time: {:?}", total);
+    println!("Total time: {total:?}");
 }
