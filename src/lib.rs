@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 #[macro_use]
 mod grid;
 
+#[macro_use]
 pub mod prelude;
 
 mod day01;
