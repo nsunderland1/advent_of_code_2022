@@ -1,3 +1,4 @@
+#[allow(unused)]
 use crate::prelude::*;
 
 fn parse_line(s: &str) -> u32 {
