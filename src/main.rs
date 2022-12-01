@@ -1,9 +1,6 @@
-use std::{
-    fs,
-    time::{Duration, Instant},
-};
+use std::time::{Duration, Instant};
 
-use advent_of_code_2022::{get_input_file, run_day};
+use advent_of_code_2022::{get_input, run_day};
 use chrono::{Datelike, FixedOffset, Utc};
 use clap::Parser;
 
@@ -48,12 +45,13 @@ fn main() {
 
     let mut total = Duration::ZERO;
     for day in days {
-        let input = fs::read_to_string(get_input_file(day)).expect("Failed to read input file");
-        let input = input.trim();
-        println!("Day {}", day);
+        let input = get_input(day);
+        println!("Day {day}");
         let time = Instant::now();
-        run_day(day, &input);
+        let (part1, part2) = run_day(day, &input);
         let runtime = time.elapsed();
+        println!("Part 1: {part1}");
+        println!("Part 2: {part2}");
         println!("Ran in {:?}", runtime);
         total += runtime;
     }
