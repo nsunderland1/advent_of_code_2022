@@ -9,8 +9,9 @@ mod grid;
 pub mod prelude;
 
 mod day01;
+mod day02;
 
-const DAY_TABLE: &[fn(&str) -> (usize, usize)] = &[day01::run];
+const DAY_TABLE: &[fn(&str) -> (usize, usize)] = &[day01::run, day02::run];
 
 /// Get the path to the input file for a given day
 pub fn get_input(day: u32) -> String {
