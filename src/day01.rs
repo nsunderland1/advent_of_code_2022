@@ -1,19 +1,29 @@
 #[allow(unused)]
 use crate::prelude::*;
 
+fn parse_int_faster(ascii_bytes: &[u8]) -> usize {
+    let mut total: usize = 0;
+    for byte in ascii_bytes {
+        total *= 10;
+        total += (byte - b'0') as usize;
+    }
+    total
+}
+
 pub fn run(input: &str) -> (usize, usize) {
     // Invariant: always sorted in ascending order
     let mut heapish = [0usize; 4];
 
     let mut elf = 0usize;
-    for line in input.lines() {
+    let input = input.as_bytes();
+    for line in input.split(|&byte| byte == b'\n') {
         if line.is_empty() {
             heapish[0] = elf;
             heapish.sort();
             elf = 0;
             continue;
         }
-        elf += line.parse::<usize>().unwrap();
+        elf += parse_int_faster(line)
     }
 
     (heapish[3], heapish.into_iter().skip(1).sum::<usize>())

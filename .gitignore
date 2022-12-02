@@ -14,5 +14,5 @@ input
 output
 
 # Flamegraph stuff
-./perf.data*
-./flamegraph.svg
+perf.data*
+flamegraph.svg
