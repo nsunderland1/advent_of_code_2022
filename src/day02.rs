@@ -99,7 +99,7 @@ pub fn run(input: &str) -> (usize, usize) {
     let mut part2 = 0;
 
     let input = input.as_bytes();
-    for line in input.split(|&byte| byte == b'\n') {
+    for line in input.chunks(4) {
         let (result1, result2) = LOOKUP_TABLE[index(line)];
         part1 += result1;
         part2 += result2;
