@@ -58,34 +58,23 @@ impl FromStr for Play {
 }
 
 pub fn run(input: &str) -> (usize, usize) {
-    let plays: Vec<(Play, Play)> = input
-        .lines()
-        .map(|line| {
-            line.split(' ')
-                .map(|play| play.parse().unwrap())
-                .collect_tuple()
-                .unwrap()
-        })
-        .collect();
+    let plays = input.lines().map(|line| {
+        let (them, us) = line.split_once(' ').unwrap();
+        (them.parse::<Play>().unwrap(), us.parse::<Play>().unwrap())
+    });
 
-    let result1 = {
-        plays
-            .iter()
-            .copied()
-            .map(|(them, us)| Play::score(them, us))
-            .sum()
-    };
+    let mut result1 = 0;
+    let mut result2 = 0;
 
-    let result2 = {
-        plays
-            .into_iter()
-            .map(|(them, result)| match result {
-                Play::Rock => Play::score(them, Play::lose(them)),
-                Play::Paper => Play::score(them, Play::draw(them)),
-                Play::Scissors => Play::score(them, Play::win(them)),
-            })
-            .sum()
-    };
+    for (them, us) in plays {
+        result1 += Play::score(them, us);
+        let func = match us {
+            Play::Rock => Play::lose,
+            Play::Paper => Play::draw,
+            Play::Scissors => Play::win,
+        };
+        result2 += Play::score(them, func(them));
+    }
 
     (result1, result2)
 }
