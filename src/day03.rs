@@ -1,63 +1,42 @@
 #[allow(unused)]
 use crate::prelude::*;
 
-fn byte_priority(byte: u8) -> usize {
-    (match byte {
-        b'a'..=b'z' => 1 + byte - b'a',
-        b'A'..=b'Z' => 27 + byte - b'A',
+fn byte_bit(byte: u8) -> u64 {
+    1 << (match byte {
+        b'a'..=b'z' => byte - b'a',
+        b'A'..=b'Z' => 26 + byte - b'A',
         _ => unreachable!(),
     }) as usize
 }
 
-fn process_line(line: &[u8], seen: &mut [u8; 52]) -> usize {
-    seen.fill(0);
-
+fn process_line(line: &[u8]) -> (u32, u64) {
     let (left, right) = line.split_at(line.len() / 2);
 
-    for &byte in left {
-        seen[byte_priority(byte) - 1] = 1;
-    }
+    let left_set = left.iter().fold(0u64, |set, &byte| set | byte_bit(byte));
+    let right_set = right.iter().fold(0u64, |set, &byte| set | byte_bit(byte));
 
-    let mut part1_score = 0;
-    for &byte in right {
-        let priority = byte_priority(byte);
-        if seen[priority - 1] == 1 {
-            part1_score = priority;
-        }
-        seen[priority - 1] = 2;
-    }
-
-    part1_score
+    (
+        (left_set & right_set).trailing_zeros() + 1,
+        left_set | right_set,
+    )
 }
 
-const NUM_LETTERS: usize = 52;
-
 pub fn run(input: &str) -> (usize, usize) {
-    let mut seen = [[0u8; NUM_LETTERS]; 3];
-
     let mut part1_score = 0;
     let mut part2_score = 0;
-    for three_lines in input
-        .as_bytes()
-        .split(|&byte| byte == b'\n')
-        .chunks(3)
-        .into_iter()
-    {
-        let (line_1, line_2, line_3) = three_lines.collect_tuple().unwrap();
 
-        part1_score += process_line(line_1, &mut seen[0]);
-        part1_score += process_line(line_2, &mut seen[1]);
-        part1_score += process_line(line_3, &mut seen[2]);
+    let mut lines = input.as_bytes().split(|&byte| byte == b'\n');
 
-        for i in 0..NUM_LETTERS {
-            if seen[0][i] > 0 && seen[1][i] > 0 && seen[2][i] > 0 {
-                part2_score += i + 1;
-                break;
-            }
-        }
+    while let Some(line) = lines.next() {
+        let (score_1, set_1) = process_line(line);
+        let (score_2, set_2) = process_line(lines.next().unwrap());
+        let (score_3, set_3) = process_line(lines.next().unwrap());
+
+        part1_score += score_1 + score_2 + score_3;
+        part2_score += (set_1 & set_2 & set_3).trailing_zeros() + 1;
     }
 
-    (part1_score, part2_score)
+    (part1_score as usize, part2_score as usize)
 }
 
 // Original solution
