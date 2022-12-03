@@ -1,51 +1,115 @@
+use std::hint::unreachable_unchecked;
+
 #[allow(unused)]
 use crate::prelude::*;
 
+fn byte_priority(byte: u8) -> usize {
+    (match byte {
+        b'a'..=b'z' => 1 + byte - b'a',
+        b'A'..=b'Z' => 27 + byte - b'A',
+        _ => unreachable!(),
+    }) as usize
+}
+
+fn process_line(line: &[u8], seen: &mut [bool; 52]) -> usize {
+    seen.fill(false);
+
+    let (left, right) = line.split_at(line.len() / 2);
+
+    for &byte in left {
+        seen[byte_priority(byte) - 1] = true;
+    }
+
+    let part1_score = right
+        .into_iter()
+        .copied()
+        .map(byte_priority)
+        .find(|priority| seen[priority - 1])
+        .unwrap();
+
+    for &byte in right {
+        seen[byte_priority(byte) - 1] = true;
+    }
+
+    part1_score
+}
+
+const NUM_LETTERS: usize = 52;
+
 pub fn run(input: &str) -> (usize, usize) {
-    let mut result1 = 0;
-    input
-        .lines()
-        .map(|line| line.as_bytes())
-        .map(|line| {
-            let (left, right) = line.split_at(line.len() / 2);
-            let left: HashSet<_> = left.iter().copied().collect();
-            let right: HashSet<_> = right.iter().copied().collect();
-            let intersection = left.intersection(&right);
+    let mut seen = [[false; NUM_LETTERS]; 3];
 
-            for byte in intersection {
-                result1 += match byte {
-                    b'a'..=b'z' => 1 + byte - b'a',
-                    b'A'..=b'Z' => 27 + byte - b'A',
-                    _ => unreachable!(),
-                } as usize;
-            }
-        })
-        .collect_vec();
-
-    let total = input
-        .lines()
-        .map(|line| line.as_bytes())
+    let mut part1_score = 0;
+    let mut part2_score = 0;
+    for three_lines in input
+        .as_bytes()
+        .split(|&byte| byte == b'\n')
         .chunks(3)
         .into_iter()
-        .map(|chunk| {
-            let byte = chunk
-                .map(|line| line.into_iter().copied().collect::<HashSet<u8>>())
-                .reduce(|a, b| a.intersection(&b).copied().collect())
-                .unwrap()
-                .into_iter()
-                .next()
-                .unwrap();
+    {
+        let (line_1, line_2, line_3) = three_lines.collect_tuple().unwrap();
 
-            (match byte {
-                b'a'..=b'z' => 1 + byte - b'a',
-                b'A'..=b'Z' => 27 + byte - b'A',
-                _ => unreachable!(),
-            }) as usize
-        })
-        .sum();
+        part1_score += process_line(line_1, &mut seen[0]);
+        part1_score += process_line(line_2, &mut seen[1]);
+        part1_score += process_line(line_3, &mut seen[2]);
 
-    (result1, total)
+        for i in 0..NUM_LETTERS {
+            if seen[0][i] && seen[1][i] && seen[2][i] {
+                part2_score += i + 1;
+                break;
+            }
+        }
+    }
+
+    (part1_score, part2_score)
 }
+
+// Original solution
+// pub fn run(input: &str) -> (usize, usize) {
+//     let mut result1 = 0;
+//     input
+//         .lines()
+//         .map(|line| line.as_bytes())
+//         .map(|line| {
+//             let (left, right) = line.split_at(line.len() / 2);
+//             let left: HashSet<_> = left.iter().copied().collect();
+//             let right: HashSet<_> = right.iter().copied().collect();
+//             let intersection = left.intersection(&right);
+
+//             for byte in intersection {
+//                 result1 += match byte {
+//                     b'a'..=b'z' => 1 + byte - b'a',
+//                     b'A'..=b'Z' => 27 + byte - b'A',
+//                     _ => unreachable!(),
+//                 } as usize;
+//             }
+//         })
+//         .collect_vec();
+
+//     let total = input
+//         .lines()
+//         .map(|line| line.as_bytes())
+//         .chunks(3)
+//         .into_iter()
+//         .map(|chunk| {
+//             let byte = chunk
+//                 .map(|line| line.into_iter().copied().collect::<HashSet<u8>>())
+//                 .reduce(|a, b| a.intersection(&b).copied().collect())
+//                 .unwrap()
+//                 .into_iter()
+//                 .next()
+//                 .unwrap();
+
+//             (match byte {
+//                 b'a'..=b'z' => 1 + byte - b'a',
+//                 b'A'..=b'Z' => 27 + byte - b'A',
+//                 _ => unreachable!(),
+//             }) as usize
+//         })
+//         .sum();
+
+//     (result1, total)
+// }
 
 #[cfg(test)]
 mod tests {
