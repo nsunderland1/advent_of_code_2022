@@ -1,5 +1,3 @@
-use std::hint::unreachable_unchecked;
-
 #[allow(unused)]
 use crate::prelude::*;
 
@@ -11,24 +9,22 @@ fn byte_priority(byte: u8) -> usize {
     }) as usize
 }
 
-fn process_line(line: &[u8], seen: &mut [bool; 52]) -> usize {
-    seen.fill(false);
+fn process_line(line: &[u8], seen: &mut [u8; 52]) -> usize {
+    seen.fill(0);
 
     let (left, right) = line.split_at(line.len() / 2);
 
     for &byte in left {
-        seen[byte_priority(byte) - 1] = true;
+        seen[byte_priority(byte) - 1] = 1;
     }
 
-    let part1_score = right
-        .into_iter()
-        .copied()
-        .map(byte_priority)
-        .find(|priority| seen[priority - 1])
-        .unwrap();
-
+    let mut part1_score = 0;
     for &byte in right {
-        seen[byte_priority(byte) - 1] = true;
+        let priority = byte_priority(byte);
+        if seen[priority - 1] == 1 {
+            part1_score = priority;
+        }
+        seen[priority - 1] = 2;
     }
 
     part1_score
@@ -37,7 +33,7 @@ fn process_line(line: &[u8], seen: &mut [bool; 52]) -> usize {
 const NUM_LETTERS: usize = 52;
 
 pub fn run(input: &str) -> (usize, usize) {
-    let mut seen = [[false; NUM_LETTERS]; 3];
+    let mut seen = [[0u8; NUM_LETTERS]; 3];
 
     let mut part1_score = 0;
     let mut part2_score = 0;
@@ -54,7 +50,7 @@ pub fn run(input: &str) -> (usize, usize) {
         part1_score += process_line(line_3, &mut seen[2]);
 
         for i in 0..NUM_LETTERS {
-            if seen[0][i] && seen[1][i] && seen[2][i] {
+            if seen[0][i] > 0 && seen[1][i] > 0 && seen[2][i] > 0 {
                 part2_score += i + 1;
                 break;
             }
