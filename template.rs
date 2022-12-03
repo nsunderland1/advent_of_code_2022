@@ -1,14 +1,7 @@
 #[allow(unused)]
 use crate::prelude::*;
 
-fn parse_line(s: &str) -> u32 {
-    s.parse().unwrap()
-}
-
 pub fn run(input: &str) -> (usize, usize) {
-    #[allow(unused)]
-    let input: Vec<_> = input.lines().map(parse_line).collect();
-
     let result1 = {
         // Part 1
         0
