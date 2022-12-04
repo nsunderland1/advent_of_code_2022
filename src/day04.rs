@@ -18,22 +18,16 @@ pub fn run(input: &str) -> (usize, usize) {
     let mut result2 = 0;
 
     while !bytes.is_empty() {
-        let s1;
+        let (s1, e1, s2, e2);
         (bytes, s1) = parse_int(bytes, b'-');
-
-        let e1;
         (bytes, e1) = parse_int(bytes, b',');
-
-        let s2;
         (bytes, s2) = parse_int(bytes, b'-');
-
-        let e2;
         (bytes, e2) = parse_int(bytes, b'\n');
 
-        let contained = (s1 <= s2 && e1 >= e2) || (s2 <= s1 && e2 >= e1);
+        let contained = (s1 <= s2 && e2 <= e1) || (s2 <= s1 && e1 <= e2);
         result1 += contained as usize;
 
-        let overlapping = (s2 >= s1 && s2 <= e1) || (s1 >= s2 && s1 <= e2);
+        let overlapping = (s1 <= s2 && s2 <= e1) || (s2 <= s1 && s1 <= e2);
         result2 += overlapping as usize;
     }
 
