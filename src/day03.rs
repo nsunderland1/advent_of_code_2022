@@ -25,7 +25,10 @@ pub fn run(input: &str) -> (usize, usize) {
     let mut part1_score = 0;
     let mut part2_score = 0;
 
-    let mut lines = input.as_bytes().split(|&byte| byte == b'\n');
+    let mut lines = input
+        .as_bytes()
+        .split(|&byte| byte == b'\n')
+        .filter(|line| !line.is_empty());
 
     while let Some(line) = lines.next() {
         let (score_1, set_1) = process_line(line);

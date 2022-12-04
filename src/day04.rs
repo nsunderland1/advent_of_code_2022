@@ -1,35 +1,41 @@
 #[allow(unused)]
 use crate::prelude::*;
 
+fn parse_int(mut bytes: &[u8], delimiter: u8) -> (&[u8], u8) {
+    let mut num = 0;
+    while bytes[0] != delimiter {
+        num *= 10;
+        num += bytes[0] - b'0';
+        bytes = &bytes[1..];
+    }
+    (&bytes[1..], num)
+}
+
 pub fn run(input: &str) -> (usize, usize) {
-    let result1 = input
-        .lines()
-        .filter(|line| {
-            let (r1, r2) = line.split_once(',').unwrap();
-            let (s1, e1) = r1.split_once('-').unwrap();
-            let (s2, e2) = r2.split_once('-').unwrap();
-            let s1 = s1.parse::<usize>().unwrap();
-            let s2 = s2.parse::<usize>().unwrap();
-            let e1 = e1.parse::<usize>().unwrap();
-            let e2 = e2.parse::<usize>().unwrap();
+    let mut bytes = input.as_bytes();
 
-            (s1 <= s2 && e1 >= e2) || (s2 <= s1 && e2 >= e1)
-        })
-        .count();
-    let result2 = input
-        .lines()
-        .filter(|line| {
-            let (r1, r2) = line.split_once(',').unwrap();
-            let (s1, e1) = r1.split_once('-').unwrap();
-            let (s2, e2) = r2.split_once('-').unwrap();
-            let s1 = s1.parse::<usize>().unwrap();
-            let s2 = s2.parse::<usize>().unwrap();
-            let e1 = e1.parse::<usize>().unwrap();
-            let e2 = e2.parse::<usize>().unwrap();
+    let mut result1 = 0;
+    let mut result2 = 0;
 
-            (s2 >= s1 && s2 <= e1) || (s1 >= s2 && s1 <= e2)
-        })
-        .count();
+    while !bytes.is_empty() {
+        let s1;
+        (bytes, s1) = parse_int(bytes, b'-');
+
+        let e1;
+        (bytes, e1) = parse_int(bytes, b',');
+
+        let s2;
+        (bytes, s2) = parse_int(bytes, b'-');
+
+        let e2;
+        (bytes, e2) = parse_int(bytes, b'\n');
+
+        let contained = (s1 <= s2 && e1 >= e2) || (s2 <= s1 && e2 >= e1);
+        result1 += contained as usize;
+
+        let overlapping = (s2 >= s1 && s2 <= e1) || (s1 >= s2 && s1 <= e2);
+        result2 += overlapping as usize;
+    }
 
     (result1, result2)
 }

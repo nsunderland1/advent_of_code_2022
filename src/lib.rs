@@ -21,7 +21,6 @@ pub fn get_input(day: u32) -> String {
     let input_file = crate_root.join("input").join(format!("{day}.input"));
     std::fs::read_to_string(input_file)
         .expect("Could not read from input file")
-        .trim()
         .to_owned()
 }
 
