@@ -1,6 +1,5 @@
 #[allow(unused)]
 use crate::prelude::*;
-use crate::Solution;
 
 fn parse_int(mut bytes: &[u8], delimiter: u8) -> (&[u8], u8) {
     let mut num = 0;

@@ -1,6 +1,5 @@
 #[allow(unused)]
 use crate::prelude::*;
-use crate::Solution;
 
 fn byte_bit(byte: u8) -> u64 {
     1 << (match byte {

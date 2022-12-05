@@ -1,6 +1,5 @@
 #[allow(unused)]
 use crate::prelude::*;
-use crate::Solution;
 
 const fn index(string: &[u8]) -> usize {
     (((string[0] - b'A') * 3) + (string[2] - b'X')) as usize

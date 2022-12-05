@@ -1,6 +1,5 @@
 #[allow(unused)]
 use crate::prelude::*;
-use crate::Solution;
 
 fn parse_int_faster(ascii_bytes: &[u8]) -> usize {
     let mut total: usize = 0;

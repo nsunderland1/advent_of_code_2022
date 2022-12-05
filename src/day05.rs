@@ -11,7 +11,6 @@ use nom::{
 
 #[allow(unused)]
 use crate::prelude::*;
-use crate::Solution;
 
 fn parse_stack_entry(input: &[u8]) -> IResult<&[u8], Option<u8>> {
     alt((

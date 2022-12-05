@@ -1,7 +1,7 @@
 #[allow(unused)]
 use crate::prelude::*;
 
-pub fn run(input: &str) -> (usize, usize) {
+pub fn run(input: &str) -> (Solution, Solution) {
     let result1 = {
         // Part 1
         0
@@ -12,7 +12,7 @@ pub fn run(input: &str) -> (usize, usize) {
         0
     };
 
-    (result1, result2)
+    (result1.into(), result2.into())
 }
 
 #[cfg(test)]
