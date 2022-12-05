@@ -1,5 +1,6 @@
 #[allow(unused)]
 use crate::prelude::*;
+use crate::Solution;
 
 const fn index(string: &[u8]) -> usize {
     (((string[0] - b'A') * 3) + (string[2] - b'X')) as usize
@@ -70,7 +71,7 @@ const fn part2_score(round: &[u8]) -> usize {
     )
 }
 
-pub fn run(input: &str) -> (usize, usize) {
+pub fn run(input: &str) -> (Solution, Solution) {
     const LOOKUP_TABLE: [(usize, usize); 9] = {
         let cases = [
             b"A X", b"A Y", b"A Z", b"B X", b"B Y", b"B Z", b"C X", b"C Y", b"C Z",
@@ -105,7 +106,7 @@ pub fn run(input: &str) -> (usize, usize) {
         part2 += result2;
     }
 
-    (part1, part2)
+    (part1.into(), part2.into())
 }
 
 // #[derive(Clone, Copy)]

@@ -1,4 +1,8 @@
-use std::path::{Path, PathBuf};
+use std::{
+    fmt::Display,
+    path::{Path, PathBuf},
+    str::FromStr,
+};
 
 use itertools::Itertools;
 
@@ -14,7 +18,50 @@ mod day03;
 mod day04;
 mod day05;
 
-const DAY_TABLE: &[fn(&str) -> (usize, usize)] =
+#[derive(Debug, PartialEq, Eq)]
+pub enum Solution {
+    Int(usize),
+    String(String),
+}
+
+impl From<usize> for Solution {
+    fn from(num: usize) -> Self {
+        Self::Int(num)
+    }
+}
+
+impl From<String> for Solution {
+    fn from(string: String) -> Self {
+        Self::String(string)
+    }
+}
+
+impl From<&str> for Solution {
+    fn from(string: &str) -> Self {
+        Self::String(string.into())
+    }
+}
+
+impl FromStr for Solution {
+    type Err = Box<dyn std::error::Error>;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(s.parse::<usize>()
+            .map(Self::from)
+            .unwrap_or_else(|_| Self::from(s)))
+    }
+}
+
+impl Display for Solution {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Int(num) => write!(f, "{num}"),
+            Self::String(string) => write!(f, "{string}"),
+        }
+    }
+}
+
+const DAY_TABLE: &[fn(&str) -> (Solution, Solution)] =
     &[day01::run, day02::run, day03::run, day04::run, day05::run];
 
 /// Get the path to the input file for a given day
@@ -27,7 +74,7 @@ pub fn get_input(day: u32) -> String {
 }
 
 /// Run a specific day with the given input as a string
-pub fn run_day(day: u32, input: &str) -> (usize, usize) {
+pub fn run_day(day: u32, input: &str) -> (Solution, Solution) {
     DAY_TABLE[day as usize - 1](input)
 }
 
@@ -36,7 +83,7 @@ pub fn output_file_path(day: u32) -> PathBuf {
     crate_root.join("output").join(format!("{day}.output"))
 }
 
-pub fn get_expected_output(day: u32) -> (usize, usize) {
+pub fn get_expected_output(day: u32) -> (Solution, Solution) {
     let output_file = output_file_path(day);
     let file_contents =
         std::fs::read_to_string(output_file).expect("Could not read from output file");

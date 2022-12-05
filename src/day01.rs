@@ -1,5 +1,6 @@
 #[allow(unused)]
 use crate::prelude::*;
+use crate::Solution;
 
 fn parse_int_faster(ascii_bytes: &[u8]) -> usize {
     let mut total: usize = 0;
@@ -10,7 +11,7 @@ fn parse_int_faster(ascii_bytes: &[u8]) -> usize {
     total
 }
 
-pub fn run(input: &str) -> (usize, usize) {
+pub fn run(input: &str) -> (Solution, Solution) {
     // Invariant: always sorted in ascending order
     let mut heapish = [0usize; 4];
 
@@ -26,7 +27,10 @@ pub fn run(input: &str) -> (usize, usize) {
         elf += parse_int_faster(line)
     }
 
-    (heapish[3], heapish.into_iter().skip(1).sum::<usize>())
+    (
+        heapish[3].into(),
+        heapish.into_iter().skip(1).sum::<usize>().into(),
+    )
 }
 
 #[cfg(test)]

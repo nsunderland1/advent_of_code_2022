@@ -11,6 +11,7 @@ use nom::{
 
 #[allow(unused)]
 use crate::prelude::*;
+use crate::Solution;
 
 fn parse_stack_entry(input: &[u8]) -> IResult<&[u8], Option<u8>> {
     alt((
@@ -53,7 +54,7 @@ fn parse_instruction(string: &[u8]) -> IResult<&[u8], (usize, usize, usize)> {
     Ok((rem, (count as usize, from as usize - 1, to as usize - 1)))
 }
 
-pub fn run(input: &str) -> (usize, usize) {
+pub fn run(input: &str) -> (Solution, Solution) {
     let mut stacks = Vec::new();
 
     let mut lines = input.lines();
@@ -66,7 +67,7 @@ pub fn run(input: &str) -> (usize, usize) {
         .map(|line| parse_instruction(line.as_bytes()).unwrap().1)
         .collect();
 
-    {
+    let result1: String = {
         let mut stacks = stacks.clone();
 
         for &(num, from, to) in &instructions {
@@ -76,14 +77,13 @@ pub fn run(input: &str) -> (usize, usize) {
             }
         }
 
-        for stack in stacks {
-            print!("{}", *stack.front().unwrap() as char);
-        }
-    }
+        stacks
+            .into_iter()
+            .map(|stack| *stack.front().unwrap() as char)
+            .collect()
+    };
 
-    println!();
-
-    {
+    let result2: String = {
         for (num, from, to) in instructions {
             let (from_stack, to_stack) = match from.cmp(&to) {
                 Ordering::Less => {
@@ -102,15 +102,13 @@ pub fn run(input: &str) -> (usize, usize) {
             }
         }
 
-        for stack in stacks {
-            print!("{}", *stack.front().unwrap() as char);
-        }
-    }
+        stacks
+            .into_iter()
+            .map(|stack| *stack.front().unwrap() as char)
+            .collect()
+    };
 
-    println!();
-
-    // println!("Part 1:");
-    (0, 0)
+    (result1.into(), result2.into())
 }
 
 #[cfg(test)]

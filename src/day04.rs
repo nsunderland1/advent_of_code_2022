@@ -1,5 +1,6 @@
 #[allow(unused)]
 use crate::prelude::*;
+use crate::Solution;
 
 fn parse_int(mut bytes: &[u8], delimiter: u8) -> (&[u8], u8) {
     let mut num = 0;
@@ -11,7 +12,7 @@ fn parse_int(mut bytes: &[u8], delimiter: u8) -> (&[u8], u8) {
     (&bytes[1..], num)
 }
 
-pub fn run(input: &str) -> (usize, usize) {
+pub fn run(input: &str) -> (Solution, Solution) {
     let mut bytes = input.as_bytes();
 
     let mut result1 = 0;
@@ -31,7 +32,7 @@ pub fn run(input: &str) -> (usize, usize) {
         result2 += overlapping as usize;
     }
 
-    (result1, result2)
+    (result1.into(), result2.into())
 }
 
 #[cfg(test)]

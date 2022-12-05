@@ -1,5 +1,6 @@
 #[allow(unused)]
 use crate::prelude::*;
+use crate::Solution;
 
 fn byte_bit(byte: u8) -> u64 {
     1 << (match byte {
@@ -21,7 +22,7 @@ fn process_line(line: &[u8]) -> (u32, u64) {
     )
 }
 
-pub fn run(input: &str) -> (usize, usize) {
+pub fn run(input: &str) -> (Solution, Solution) {
     let mut part1_score = 0;
     let mut part2_score = 0;
 
@@ -39,7 +40,7 @@ pub fn run(input: &str) -> (usize, usize) {
         part2_score += (set_1 & set_2 & set_3).trailing_zeros() + 1;
     }
 
-    (part1_score as usize, part2_score as usize)
+    ((part1_score as usize).into(), (part2_score as usize).into())
 }
 
 // Original solution
