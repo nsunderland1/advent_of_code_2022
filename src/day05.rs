@@ -5,7 +5,7 @@ use nom::{
     bytes::complete::{tag, take},
     combinator::{map, value},
     multi::separated_list1,
-    sequence::{delimited, tuple},
+    sequence::delimited,
     IResult,
 };
 
@@ -40,31 +40,40 @@ fn parse_stack_row<'a>(input: &'a [u8], stacks: &mut Vec<VecDeque<u8>>) -> IResu
     Ok((remaining, ()))
 }
 
-fn parse_instruction(string: &[u8]) -> IResult<&[u8], (usize, usize, usize)> {
-    let (rem, (_, count, _, from, _, to)) = tuple((
-        tag("move "),
-        nom::character::complete::u64,
-        tag(" from "),
-        nom::character::complete::u64,
-        tag(" to "),
-        nom::character::complete::u64,
-    ))(string)?;
+fn parse_int(mut bytes: &[u8], delimiter: u8) -> (&[u8], usize) {
+    let mut num = 0;
+    while bytes[0] != delimiter {
+        num *= 10;
+        num += (bytes[0] - b'0') as usize;
+        bytes = &bytes[1..];
+    }
+    (&bytes[1..], num)
+}
 
-    Ok((rem, (count as usize, from as usize - 1, to as usize - 1)))
+fn parse_instruction(mut input: &[u8]) -> (&[u8], usize, usize, usize) {
+    let (count, from, to);
+    (input, count) = parse_int(&input[5..], b' ');
+    (input, from) = parse_int(&input[5..], b' ');
+    (input, to) = parse_int(&input[3..], b'\n');
+    (input, count, from - 1, to - 1)
 }
 
 pub fn run(input: &str) -> (Solution, Solution) {
     let mut stacks = Vec::new();
 
-    let mut lines = input.lines();
+    let (stack, instructions) = input.split_once("\n\n").unwrap();
 
-    while let Ok(_) = parse_stack_row(lines.next().unwrap().as_bytes(), &mut stacks) {}
+    for line in stack.lines() {
+        let _ = parse_stack_row(line.as_bytes(), &mut stacks);
+    }
 
-    assert_eq!(lines.next().unwrap(), "");
-
-    let instructions: Vec<_> = lines
-        .map(|line| parse_instruction(line.as_bytes()).unwrap().1)
-        .collect();
+    let mut instructions_bytes = instructions.as_bytes();
+    let mut instructions = Vec::new();
+    while !instructions_bytes.is_empty() {
+        let (count, from, to);
+        (instructions_bytes, count, from, to) = parse_instruction(instructions_bytes);
+        instructions.push((count, from, to));
+    }
 
     let result1: String = {
         let mut stacks = stacks.clone();
