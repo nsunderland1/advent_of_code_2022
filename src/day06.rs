@@ -5,20 +5,20 @@ use crate::prelude::*;
 
 fn solve(input: &str, n: usize) -> usize {
     let mut last_n = VecDeque::with_capacity(n);
-    let mut seen = [false; 26];
+    let mut seen = [false; 256];
 
     for (i, &byte) in input.as_bytes().iter().enumerate() {
         last_n.push_back(byte);
-        if seen[(byte - b'a') as usize] {
+        if seen[byte as usize] {
             loop {
                 let front = last_n.pop_front().unwrap();
                 if front == byte {
                     break;
                 }
-                seen[(front - b'a') as usize] = false;
+                seen[front as usize] = false;
             }
         }
-        seen[(byte - b'a') as usize] = true;
+        seen[byte as usize] = true;
 
         if last_n.len() == n {
             return i + 1;
