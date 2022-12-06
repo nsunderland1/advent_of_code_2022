@@ -1,26 +1,20 @@
-use std::collections::VecDeque;
-
 #[allow(unused)]
 use crate::prelude::*;
 
 fn solve(input: &str, n: usize) -> usize {
-    let mut last_n = VecDeque::with_capacity(n);
-    let mut seen = [false; 256];
+    let mut start = 0;
+    let mut seen_at = [None; 256];
 
-    for (i, &byte) in input.as_bytes().iter().enumerate() {
-        last_n.push_back(byte);
-        if seen[byte as usize] {
-            loop {
-                let front = last_n.pop_front().unwrap();
-                if front == byte {
-                    break;
-                }
-                seen[front as usize] = false;
+    let input = input.as_bytes();
+    for (i, &byte) in input.iter().enumerate() {
+        if let Some(index) = seen_at[byte as usize] {
+            if index >= start {
+                start = index + 1;
             }
         }
-        seen[byte as usize] = true;
+        seen_at[byte as usize] = Some(i);
 
-        if last_n.len() == n {
+        if i - start + 1 == n {
             return i + 1;
         }
     }
