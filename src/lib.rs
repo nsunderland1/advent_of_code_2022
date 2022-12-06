@@ -17,6 +17,16 @@ mod day02;
 mod day03;
 mod day04;
 mod day05;
+mod day06;
+
+const DAY_TABLE: &[fn(&str) -> (Solution, Solution)] = &[
+    day01::run,
+    day02::run,
+    day03::run,
+    day04::run,
+    day05::run,
+    day06::run,
+];
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Solution {
@@ -60,9 +70,6 @@ impl Display for Solution {
         }
     }
 }
-
-const DAY_TABLE: &[fn(&str) -> (Solution, Solution)] =
-    &[day01::run, day02::run, day03::run, day04::run, day05::run];
 
 /// Get the path to the input file for a given day
 pub fn get_input(day: u32) -> String {
