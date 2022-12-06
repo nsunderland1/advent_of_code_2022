@@ -5,20 +5,46 @@ use crate::prelude::*;
 
 fn solve(input: &str, n: usize) -> usize {
     let mut last_n = VecDeque::with_capacity(n);
+    let mut seen = [false; 26];
 
-    for (i, char) in input.chars().enumerate() {
-        if last_n.len() == n {
-            last_n.pop_front();
+    for (i, &byte) in input.as_bytes().iter().enumerate() {
+        last_n.push_back(byte);
+        if seen[(byte - b'a') as usize] {
+            loop {
+                let front = last_n.pop_front().unwrap();
+                if front == byte {
+                    break;
+                }
+                seen[(front - b'a') as usize] = false;
+            }
         }
-        last_n.push_back(char);
+        seen[(byte - b'a') as usize] = true;
 
-        if last_n.iter().collect::<HashSet<_>>().len() == n {
+        if last_n.len() == n {
             return i + 1;
         }
     }
 
     unreachable!()
 }
+
+// Original solution was super nice but extremely slow
+// fn solve(input: &str, n: usize) -> usize {
+//     let mut last_n = VecDeque::with_capacity(n);
+
+//     for (i, char) in input.chars().enumerate() {
+//         if last_n.len() == n {
+//             last_n.pop_front();
+//         }
+//         last_n.push_back(char);
+
+//         if last_n.iter().collect::<HashSet<_>>().len() == n {
+//             return i + 1;
+//         }
+//     }
+
+//     unreachable!()
+// }
 
 pub fn run(input: &str) -> (Solution, Solution) {
     let result1 = solve(input, 4);
