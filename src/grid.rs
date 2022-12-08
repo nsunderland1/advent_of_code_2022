@@ -1,4 +1,5 @@
 use std::{
+    fmt::Display,
     ops::{Index, IndexMut},
     slice,
 };
@@ -14,11 +15,24 @@ macro_rules! grid {
     };
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Grid<T> {
     width: usize,
     height: usize,
     grid: Vec<T>,
+}
+
+impl<T: Display> Display for Grid<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for y in 0..self.height() {
+            for x in 0..self.width() {
+                write!(f, "{} ", self[(x, y)])?;
+            }
+            writeln!(f)?;
+        }
+
+        Ok(())
+    }
 }
 
 impl<T> Grid<T>
