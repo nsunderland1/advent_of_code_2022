@@ -21,6 +21,7 @@ mod day06;
 mod day07;
 mod day08;
 mod day09;
+mod day10;
 
 const DAY_TABLE: &[fn(&str) -> (Solution, Solution)] = &[
     day01::run,
@@ -32,6 +33,7 @@ const DAY_TABLE: &[fn(&str) -> (Solution, Solution)] = &[
     day07::run,
     day08::run,
     day09::run,
+    day10::run,
 ];
 
 #[derive(Debug, PartialEq, Eq)]

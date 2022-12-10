@@ -25,7 +25,7 @@ struct Directory {
 
 #[derive(Debug, Clone)]
 struct File {
-    name: String,
+    _name: String,
     size: usize,
 }
 
@@ -49,7 +49,7 @@ fn parse_file(input: &str) -> IResult<&str, File> {
     Ok((
         input,
         File {
-            name: name.to_owned(),
+            _name: name.to_owned(),
             size: size as usize,
         },
     ))
