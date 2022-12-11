@@ -79,8 +79,9 @@ impl Test {
     }
 }
 
+#[derive(Clone)]
 struct Monkey {
-    id: usize,
+    _id: usize,
     items: VecDeque<usize>,
     operation: Operation,
     test: Test,
@@ -153,7 +154,7 @@ fn parse_monkey(input: &str) -> IResult<&str, Monkey> {
             terminated(parse_test, newline),
         )),
         |(id, items, operation, test)| Monkey {
-            id,
+            _id: id,
             items: VecDeque::from(items),
             operation,
             test,
@@ -165,38 +166,44 @@ fn parse_input(input: &str) -> IResult<&str, Vec<Monkey>> {
     separated_list1(newline, parse_monkey)(input)
 }
 
-pub fn run(input: &str) -> (Solution, Solution) {
-    let (_, mut monkeys) = parse_input(input).unwrap();
+fn solve(mut monkeys: Vec<Monkey>, num_rounds: usize, reduce: impl Fn(usize) -> usize) -> usize {
+    let mut inspected_counts = vec![0usize; monkeys.len()];
 
-    const NUM_ROUNDS: usize = 20;
-
-    let result1 = {
-        let mut inspected_counts = vec![0usize; monkeys.len()];
-
-        for _ in 0..NUM_ROUNDS {
-            for monkey in 0..monkeys.len() {
-                while let Some(mut worry_level) = monkeys[monkey].items.pop_front() {
-                    inspected_counts[monkey] += 1;
-                    worry_level = monkeys[monkey].operation.apply(worry_level);
-                    worry_level /= 3;
-                    let destination = monkeys[monkey].test.select_destination(worry_level);
-                    monkeys[destination].items.push_back(worry_level);
-                }
+    for _ in 0..num_rounds {
+        for monkey in 0..monkeys.len() {
+            while let Some(mut worry_level) = monkeys[monkey].items.pop_front() {
+                inspected_counts[monkey] += 1;
+                worry_level = monkeys[monkey].operation.apply(worry_level);
+                worry_level = reduce(worry_level);
+                let destination = monkeys[monkey].test.select_destination(worry_level);
+                monkeys[destination].items.push_back(worry_level);
             }
         }
+    }
 
-        inspected_counts.sort();
+    inspected_counts.sort();
 
-        inspected_counts
-            .into_iter()
-            .rev()
-            .take(2)
-            .product::<usize>()
-    };
+    inspected_counts
+        .into_iter()
+        .rev()
+        .take(2)
+        .product::<usize>()
+}
+
+pub fn run(input: &str) -> (Solution, Solution) {
+    let (_, monkeys) = parse_input(input).unwrap();
+
+    let result1 = { solve(monkeys.clone(), 20, |worry_level| worry_level / 3) };
 
     let result2 = {
-        // Part 2
-        0
+        let product_of_divisors = monkeys
+            .iter()
+            .map(|monkey| monkey.test.divisible_by)
+            .product::<usize>();
+
+        solve(monkeys, 10_000, |worry_level| {
+            worry_level % product_of_divisors
+        })
     };
 
     (result1.into(), result2.into())
