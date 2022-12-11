@@ -1,5 +1,5 @@
 use std::{
-    collections::VecDeque,
+    cell::RefCell,
     ops::{Add, Mul},
 };
 
@@ -82,7 +82,7 @@ impl Test {
 #[derive(Clone)]
 struct Monkey {
     _id: usize,
-    items: VecDeque<usize>,
+    items: RefCell<Vec<usize>>,
     operation: Operation,
     test: Test,
 }
@@ -155,7 +155,7 @@ fn parse_monkey(input: &str) -> IResult<&str, Monkey> {
         )),
         |(id, items, operation, test)| Monkey {
             _id: id,
-            items: VecDeque::from(items),
+            items: RefCell::new(items),
             operation,
             test,
         },
@@ -166,17 +166,18 @@ fn parse_input(input: &str) -> IResult<&str, Vec<Monkey>> {
     separated_list1(newline, parse_monkey)(input)
 }
 
-fn solve(mut monkeys: Vec<Monkey>, num_rounds: usize, reduce: impl Fn(usize) -> usize) -> usize {
+fn solve(monkeys: Vec<Monkey>, num_rounds: usize, reduce: impl Fn(usize) -> usize) -> usize {
     let mut inspected_counts = vec![0usize; monkeys.len()];
 
     for _ in 0..num_rounds {
-        for monkey in 0..monkeys.len() {
-            while let Some(mut worry_level) = monkeys[monkey].items.pop_front() {
-                inspected_counts[monkey] += 1;
-                worry_level = monkeys[monkey].operation.apply(worry_level);
+        for (monkey, inspected_count) in Iterator::zip(monkeys.iter(), inspected_counts.iter_mut())
+        {
+            for mut worry_level in monkey.items.borrow_mut().drain(..) {
+                *inspected_count += 1;
+                worry_level = monkey.operation.apply(worry_level);
                 worry_level = reduce(worry_level);
-                let destination = monkeys[monkey].test.select_destination(worry_level);
-                monkeys[destination].items.push_back(worry_level);
+                let destination = monkey.test.select_destination(worry_level);
+                monkeys[destination].items.borrow_mut().push(worry_level);
             }
         }
     }
