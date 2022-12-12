@@ -12,6 +12,8 @@ pub fn run(input: &str) -> (Solution, Solution) {
     let mut start = None;
     let mut end = None;
 
+    let mut a_positions = Vec::new();
+
     for y in 0..heightmap.height() {
         for x in 0..heightmap.width() {
             if heightmap[(x, y)] == 'S' {
@@ -21,43 +23,45 @@ pub fn run(input: &str) -> (Solution, Solution) {
                 end = Some((x, y));
                 heightmap[(x, y)] = 'z';
             }
+
+            if heightmap[(x, y)] == 'a' {
+                a_positions.push((x, y));
+            }
         }
     }
 
     let heightmap = heightmap;
-    let start = start.unwrap();
-    let end = end.unwrap();
 
-    let mut visited: HashSet<(usize, usize)> = HashSet::default();
-    let mut horizon: BinaryHeap<(Reverse<usize>, (usize, usize))> = BinaryHeap::new();
+    let mut best = usize::MAX;
+    for start in a_positions {
+        let end = end.unwrap();
 
-    horizon.push((Reverse(0), start));
+        let mut visited: HashSet<(usize, usize)> = HashSet::default();
+        let mut horizon: BinaryHeap<(Reverse<usize>, (usize, usize))> = BinaryHeap::new();
 
-    let mut result1 = None;
+        horizon.push((Reverse(0), start));
 
-    while let Some((Reverse(cost), vertex)) = horizon.pop() {
-        if visited.contains(&vertex) {
-            continue;
-        }
-        visited.insert(vertex);
-
-        for neighbour in heightmap.neighbours_orthogonal(vertex) {
-            if (heightmap[neighbour] as u8).saturating_sub(heightmap[vertex] as u8) <= 1 {
-                horizon.push((Reverse(cost + 1), neighbour));
+        while let Some((Reverse(cost), vertex)) = horizon.pop() {
+            if visited.contains(&vertex) {
+                continue;
             }
-        }
+            visited.insert(vertex);
 
-        if vertex == end {
-            result1 = Some(cost);
-            break;
+            for neighbour in heightmap.neighbours_orthogonal(vertex) {
+                if (heightmap[neighbour] as u8).saturating_sub(heightmap[vertex] as u8) <= 1 {
+                    horizon.push((Reverse(cost + 1), neighbour));
+                }
+            }
+
+            if vertex == end {
+                best = best.min(cost);
+                break;
+            }
         }
     }
 
-    let result1 = result1.unwrap();
-    let result2 = {
-        // Part 2
-        0
-    };
+    let result1 = 0;
+    let result2 = { best };
 
     (result1.into(), result2.into())
 }
