@@ -1,14 +1,14 @@
-#[allow(unused)]
 use crate::prelude::*;
 
-fn update_position(head_pos: (i32, i32), tail_pos: &mut (i32, i32)) {
-    if head_pos.0 == tail_pos.0 && head_pos.1.abs_diff(tail_pos.1) > 1 {
-        tail_pos.1 += (head_pos.1 - tail_pos.1).signum();
-    } else if head_pos.1 == tail_pos.1 && head_pos.0.abs_diff(tail_pos.0) > 1 {
-        tail_pos.0 += (head_pos.0 - tail_pos.0).signum();
-    } else if head_pos.0.abs_diff(tail_pos.0) > 1 || head_pos.1.abs_diff(tail_pos.1) > 1 {
-        tail_pos.1 += (head_pos.1 - tail_pos.1).signum();
-        tail_pos.0 += (head_pos.0 - tail_pos.0).signum();
+fn update_position(head_pos: (i32, i32), tail_pos: (i32, i32)) -> (i32, i32) {
+    let x_delta = head_pos.0 - tail_pos.0;
+    let y_delta = head_pos.1 - tail_pos.1;
+
+    match (x_delta, y_delta) {
+        (0 | 1 | -1, 0 | 1 | -1) => tail_pos,
+        (0, _) => (tail_pos.0, tail_pos.1 + y_delta.signum()),
+        (_, 0) => (tail_pos.0 + x_delta.signum(), tail_pos.1),
+        _ => (tail_pos.0 + x_delta.signum(), tail_pos.1 + y_delta.signum()),
     }
 }
 
@@ -38,11 +38,7 @@ pub fn run(input: &str) -> (Solution, Solution) {
             knots[0].1 += shift.1;
 
             for i in 0..LAST {
-                let (left, right) = knots.split_at_mut(i + 1);
-                let head = left[i];
-                let tail = &mut right[0];
-
-                update_position(head, tail);
+                knots[i + 1] = update_position(knots[i], knots[i + 1]);
             }
             seen_second.insert(knots[1]);
             seen_last.insert(knots[LAST]);
