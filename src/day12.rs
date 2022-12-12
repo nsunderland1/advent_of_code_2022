@@ -1,4 +1,4 @@
-use std::{cmp::Reverse, collections::VecDeque};
+use std::collections::VecDeque;
 
 #[allow(unused)]
 use crate::prelude::*;
@@ -28,32 +28,32 @@ pub fn run(input: &str) -> (Solution, Solution) {
     }
 
     let heightmap = heightmap;
+    let end = end.unwrap();
 
-    let mut best = usize::MAX;
+    let mut horizon: VecDeque<(usize, (usize, usize))> = VecDeque::new();
+
     for start in a_positions {
-        let end = end.unwrap();
-
-        let mut visited: HashSet<(usize, usize)> = HashSet::default();
-        let mut horizon: VecDeque<(usize, (usize, usize))> = VecDeque::new();
-
         horizon.push_back((0, start));
+    }
 
-        while let Some((cost, vertex)) = horizon.pop_front() {
-            if visited.contains(&vertex) {
-                continue;
-            }
-            visited.insert(vertex);
+    let mut visited: HashSet<(usize, usize)> = HashSet::default();
+    let mut best = usize::MAX;
 
-            for neighbour in heightmap.neighbours_orthogonal(vertex) {
-                if (heightmap[neighbour] as u8).saturating_sub(heightmap[vertex] as u8) <= 1 {
-                    horizon.push_back(((cost + 1), neighbour));
-                }
-            }
+    while let Some((cost, vertex)) = horizon.pop_front() {
+        if visited.contains(&vertex) {
+            continue;
+        }
+        visited.insert(vertex);
 
-            if vertex == end {
-                best = best.min(cost);
-                break;
+        for neighbour in heightmap.neighbours_orthogonal(vertex) {
+            if (heightmap[neighbour] as u8).saturating_sub(heightmap[vertex] as u8) <= 1 {
+                horizon.push_back(((cost + 1), neighbour));
             }
+        }
+
+        if vertex == end {
+            best = cost;
+            break;
         }
     }
 
