@@ -1,74 +1,48 @@
 #[allow(unused)]
 use crate::prelude::*;
 
+fn part_1(
+    trees: &Grid<usize>,
+    index_iterator: impl IntoIterator<Item = (usize, usize)>,
+    can_see_directions: &mut Grid<usize>,
+) {
+    let mut tallest_by_x: Vec<Option<usize>> = vec![None; trees.width()];
+    let mut tallest_by_y: Vec<Option<usize>> = vec![None; trees.height()];
+
+    for (x, y) in index_iterator {
+        match tallest_by_x[x] {
+            Some(tallest) if tallest >= trees[(x, y)] => {
+                can_see_directions[(x, y)] -= 1;
+            }
+            _ => tallest_by_x[x] = Some(trees[(x, y)]),
+        }
+
+        match tallest_by_y[y] {
+            Some(tallest) if tallest >= trees[(x, y)] => {
+                can_see_directions[(x, y)] -= 1;
+            }
+            _ => tallest_by_y[y] = Some(trees[(x, y)]),
+        }
+    }
+}
+
 pub fn run(input: &str) -> (Solution, Solution) {
     let trees: Grid<usize> = input
         .lines()
         .map(|row| row.chars().map(|c| c.to_string().parse::<usize>().unwrap()))
         .collect();
 
-    let mut can_see_directions = grid![4usize; trees.width(), trees.height()];
+    let result1 = {
+        let mut can_see_directions = grid![4usize; trees.width(), trees.height()];
 
-    for x in 0..trees.width() {
-        let mut tallest = None;
+        part_1(&trees, trees.indices(), &mut can_see_directions);
+        part_1(&trees, trees.indices().rev(), &mut can_see_directions);
 
-        for y in 0..trees.height() {
-            match tallest {
-                Some(tallest) if tallest >= trees[(x, y)] => {
-                    can_see_directions[(x, y)] -= 1;
-                }
-                _ => (),
-            }
-
-            tallest = Some(tallest.unwrap_or(0).max(trees[(x, y)]));
-        }
-
-        tallest = None;
-
-        for y in (0..trees.height()).rev() {
-            match tallest {
-                Some(tallest) if tallest >= trees[(x, y)] => {
-                    can_see_directions[(x, y)] -= 1;
-                }
-                _ => (),
-            }
-
-            tallest = Some(tallest.unwrap_or(0).max(trees[(x, y)]));
-        }
-    }
-
-    for y in 0..trees.height() {
-        let mut tallest = None;
-
-        for x in 0..trees.width() {
-            match tallest {
-                Some(tallest) if tallest >= trees[(x, y)] => {
-                    can_see_directions[(x, y)] -= 1;
-                }
-                _ => (),
-            }
-
-            tallest = Some(tallest.unwrap_or(0).max(trees[(x, y)]));
-        }
-
-        tallest = None;
-
-        for x in (0..trees.width()).rev() {
-            match tallest {
-                Some(tallest) if tallest >= trees[(x, y)] => {
-                    can_see_directions[(x, y)] -= 1;
-                }
-                _ => (),
-            }
-
-            tallest = Some(tallest.unwrap_or(0).max(trees[(x, y)]));
-        }
-    }
-
-    let result1 = can_see_directions
-        .into_flat_iter()
-        .filter(|&tree| tree > 0)
-        .count();
+        can_see_directions
+            .into_flat_iter()
+            .filter(|&tree| tree > 0)
+            .count()
+    };
 
     let mut can_see = grid![1usize; trees.width(), trees.height()];
 
