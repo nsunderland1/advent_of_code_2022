@@ -8,17 +8,17 @@ fn solve(
     mut horizon: VecDeque<(usize, (usize, usize))>,
     end: (usize, usize),
 ) -> usize {
-    let mut visited: HashSet<(usize, usize)> = HashSet::default();
+    let mut visited: Grid<bool> = grid![false; heightmap.width(), heightmap.height()];
 
     while let Some((cost, vertex)) = horizon.pop_front() {
         if vertex == end {
             return cost;
         }
 
-        if visited.contains(&vertex) {
+        if visited[vertex] {
             continue;
         }
-        visited.insert(vertex);
+        visited[vertex] = true;
 
         for neighbour in heightmap.neighbours_orthogonal(vertex) {
             if (heightmap[neighbour] as u8).saturating_sub(heightmap[vertex] as u8) <= 1 {
