@@ -3,25 +3,29 @@ use crate::prelude::*;
 
 fn part_1(
     trees: &Grid<usize>,
-    index_iterator: impl IntoIterator<Item = (usize, usize)>,
+    x_iterator: impl IntoIterator<Item = usize> + Clone,
+    y_iterator: impl IntoIterator<Item = usize>,
     can_see_directions: &mut Grid<usize>,
 ) {
     let mut tallest_by_x: Vec<Option<usize>> = vec![None; trees.width()];
-    let mut tallest_by_y: Vec<Option<usize>> = vec![None; trees.height()];
 
-    for (x, y) in index_iterator {
-        match tallest_by_x[x] {
-            Some(tallest) if tallest >= trees[(x, y)] => {
-                can_see_directions[(x, y)] -= 1;
-            }
-            _ => tallest_by_x[x] = Some(trees[(x, y)]),
-        }
+    for y in y_iterator {
+        let mut tallest_by_y: Option<usize> = None;
 
-        match tallest_by_y[y] {
-            Some(tallest) if tallest >= trees[(x, y)] => {
-                can_see_directions[(x, y)] -= 1;
+        for x in x_iterator.clone() {
+            match tallest_by_x[x] {
+                Some(tallest) if tallest >= trees[(x, y)] => {
+                    can_see_directions[(x, y)] -= 1;
+                }
+                _ => tallest_by_x[x] = Some(trees[(x, y)]),
             }
-            _ => tallest_by_y[y] = Some(trees[(x, y)]),
+
+            match tallest_by_y {
+                Some(tallest) if tallest >= trees[(x, y)] => {
+                    can_see_directions[(x, y)] -= 1;
+                }
+                _ => tallest_by_y = Some(trees[(x, y)]),
+            }
         }
     }
 }
@@ -35,8 +39,18 @@ pub fn run(input: &str) -> (Solution, Solution) {
     let result1 = {
         let mut can_see_directions = grid![4usize; trees.width(), trees.height()];
 
-        part_1(&trees, trees.indices(), &mut can_see_directions);
-        part_1(&trees, trees.indices().rev(), &mut can_see_directions);
+        part_1(
+            &trees,
+            0..trees.width(),
+            0..trees.height(),
+            &mut can_see_directions,
+        );
+        part_1(
+            &trees,
+            (0..trees.width()).rev(),
+            (0..trees.height()).rev(),
+            &mut can_see_directions,
+        );
 
         can_see_directions
             .into_flat_iter()

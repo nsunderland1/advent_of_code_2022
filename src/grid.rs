@@ -107,13 +107,6 @@ impl<T> Grid<T> {
     pub fn flat_iter_mut(&mut self) -> slice::IterMut<'_, T> {
         self.grid.iter_mut()
     }
-
-    pub fn indices(&self) -> impl DoubleEndedIterator<Item = (usize, usize)> {
-        let y_range = 0..self.height();
-        let x_range = 0..self.width();
-
-        y_range.flat_map(move |y| x_range.clone().map(move |x| (x, y)))
-    }
 }
 
 impl<T> Index<(usize, usize)> for Grid<T> {
