@@ -5,13 +5,15 @@ use crate::prelude::*;
 
 fn solve(
     heightmap: &Grid<char>,
-    mut horizon: VecDeque<(usize, (usize, usize))>,
-    end: (usize, usize),
+    start: (usize, usize),
+    can_jump: impl Fn((usize, usize), (usize, usize)) -> bool,
+    done: impl Fn((usize, usize)) -> bool,
 ) -> usize {
     let mut visited: Grid<bool> = grid![false; heightmap.width(), heightmap.height()];
+    let mut horizon = VecDeque::from([(0, start)]);
 
     while let Some((cost, vertex)) = horizon.pop_front() {
-        if vertex == end {
+        if done(vertex) {
             return cost;
         }
 
@@ -21,7 +23,7 @@ fn solve(
         visited[vertex] = true;
 
         for neighbour in heightmap.neighbours_orthogonal(vertex) {
-            if (heightmap[neighbour] as u8).saturating_sub(heightmap[vertex] as u8) <= 1 {
+            if can_jump(vertex, neighbour) {
                 horizon.push_back(((cost + 1), neighbour));
             }
         }
@@ -30,34 +32,46 @@ fn solve(
     unreachable!()
 }
 
+fn can_jump_to(heightmap: &Grid<char>, from: (usize, usize), to: (usize, usize)) -> bool {
+    (heightmap[to] as u8).saturating_sub(heightmap[from] as u8) <= 1
+}
+
 pub fn run(input: &str) -> (Solution, Solution) {
     let mut heightmap: Grid<char> = input.lines().map(|line| line.chars()).collect();
 
+    let mut start = None;
     let mut end = None;
-
-    let mut part_1_start = VecDeque::new();
-    let mut part_2_start = VecDeque::new();
 
     for y in 0..heightmap.height() {
         for x in 0..heightmap.width() {
             if heightmap[(x, y)] == 'S' {
-                part_1_start.push_back((0, (x, y)));
+                start = Some((x, y));
                 heightmap[(x, y)] = 'a';
             } else if heightmap[(x, y)] == 'E' {
                 end = Some((x, y));
                 heightmap[(x, y)] = 'z';
             }
-
-            if heightmap[(x, y)] == 'a' {
-                part_2_start.push_back((0, (x, y)));
-            }
         }
     }
 
+    let start = start.unwrap();
     let end = end.unwrap();
 
-    let result1 = solve(&heightmap, part_1_start, end);
-    let result2 = solve(&heightmap, part_2_start, end);
+    let result1 = solve(
+        &heightmap,
+        start,
+        |vertex, neighbour| can_jump_to(&heightmap, vertex, neighbour),
+        |vertex| vertex == end,
+    );
+
+    // For part 2, just find the shortest path from the end to a vertex with height 'a'
+    // This requires flipping the jump condition
+    let result2 = solve(
+        &heightmap,
+        end,
+        |vertex, neighbour| can_jump_to(&heightmap, neighbour, vertex),
+        |vertex| heightmap[vertex] == 'a',
+    );
 
     (result1.into(), result2.into())
 }
