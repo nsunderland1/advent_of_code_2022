@@ -13,75 +13,43 @@ fn update_position(head_pos: (i32, i32), tail_pos: &mut (i32, i32)) {
 }
 
 pub fn run(input: &str) -> (Solution, Solution) {
-    let result1 = {
-        let mut seen = HashSet::default();
-        let mut head_pos: (i32, i32) = (0, 0);
-        let mut tail_pos: (i32, i32) = (0, 0);
+    const LAST: usize = 9;
+    let mut seen_second = HashSet::default();
+    let mut seen_last = HashSet::default();
+    let mut knots = [(0i32, 0i32); LAST + 1];
 
-        seen.insert(tail_pos);
+    seen_second.insert(knots[1]);
+    seen_last.insert(knots[LAST]);
 
-        for step in input.lines() {
-            let (dir, count) = step.split_once(' ').unwrap();
-            let count = count.parse::<usize>().unwrap();
+    for step in input.lines() {
+        let (dir, count) = step.split_once(' ').unwrap();
+        let count = count.parse::<usize>().unwrap();
 
-            let shift = match dir {
-                "U" => (0, 1),
-                "D" => (0, -1),
-                "L" => (-1, 0),
-                "R" => (1, 0),
-                _ => unreachable!(),
-            };
+        let shift = match dir {
+            "U" => (0, 1),
+            "D" => (0, -1),
+            "L" => (-1, 0),
+            "R" => (1, 0),
+            _ => unreachable!(),
+        };
 
-            for _ in 0..count {
-                head_pos.0 += shift.0;
-                head_pos.1 += shift.1;
+        for _ in 0..count {
+            knots[0].0 += shift.0;
+            knots[0].1 += shift.1;
 
-                update_position(head_pos, &mut tail_pos);
-                seen.insert(tail_pos);
+            for i in 0..LAST {
+                let (left, right) = knots.split_at_mut(i + 1);
+                let head = left[i];
+                let tail = &mut right[0];
+
+                update_position(head, tail);
             }
+            seen_second.insert(knots[1]);
+            seen_last.insert(knots[LAST]);
         }
+    }
 
-        seen.len()
-    };
-
-    let result2 = {
-        const LAST: usize = 9;
-        let mut seen = HashSet::default();
-        let mut knots = [(0i32, 0i32); LAST + 1];
-
-        seen.insert(knots[LAST]);
-
-        for step in input.lines() {
-            let (dir, count) = step.split_once(' ').unwrap();
-            let count = count.parse::<usize>().unwrap();
-
-            let shift = match dir {
-                "U" => (0, 1),
-                "D" => (0, -1),
-                "L" => (-1, 0),
-                "R" => (1, 0),
-                _ => unreachable!(),
-            };
-
-            for _ in 0..count {
-                knots[0].0 += shift.0;
-                knots[0].1 += shift.1;
-
-                for i in 0..LAST {
-                    let (left, right) = knots.split_at_mut(i + 1);
-                    let head = left[i];
-                    let tail = &mut right[0];
-
-                    update_position(head, tail);
-                }
-                seen.insert(knots[LAST]);
-            }
-        }
-
-        seen.len()
-    };
-
-    (result1.into(), result2.into())
+    (seen_second.len().into(), seen_last.len().into())
 }
 
 #[cfg(test)]
