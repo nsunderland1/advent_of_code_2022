@@ -1,7 +1,4 @@
-use std::{
-    cmp::Reverse,
-    collections::{BTreeMap, BinaryHeap},
-};
+use std::{cmp::Reverse, collections::VecDeque};
 
 #[allow(unused)]
 use crate::prelude::*;
@@ -37,11 +34,11 @@ pub fn run(input: &str) -> (Solution, Solution) {
         let end = end.unwrap();
 
         let mut visited: HashSet<(usize, usize)> = HashSet::default();
-        let mut horizon: BinaryHeap<(Reverse<usize>, (usize, usize))> = BinaryHeap::new();
+        let mut horizon: VecDeque<(usize, (usize, usize))> = VecDeque::new();
 
-        horizon.push((Reverse(0), start));
+        horizon.push_back((0, start));
 
-        while let Some((Reverse(cost), vertex)) = horizon.pop() {
+        while let Some((cost, vertex)) = horizon.pop_front() {
             if visited.contains(&vertex) {
                 continue;
             }
@@ -49,7 +46,7 @@ pub fn run(input: &str) -> (Solution, Solution) {
 
             for neighbour in heightmap.neighbours_orthogonal(vertex) {
                 if (heightmap[neighbour] as u8).saturating_sub(heightmap[vertex] as u8) <= 1 {
-                    horizon.push((Reverse(cost + 1), neighbour));
+                    horizon.push_back(((cost + 1), neighbour));
                 }
             }
 
