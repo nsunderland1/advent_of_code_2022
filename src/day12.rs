@@ -3,43 +3,18 @@ use std::collections::VecDeque;
 #[allow(unused)]
 use crate::prelude::*;
 
-pub fn run(input: &str) -> (Solution, Solution) {
-    let mut heightmap: Grid<char> = input.lines().map(|line| line.chars()).collect();
-
-    let mut start = None;
-    let mut end = None;
-
-    let mut a_positions = Vec::new();
-
-    for y in 0..heightmap.height() {
-        for x in 0..heightmap.width() {
-            if heightmap[(x, y)] == 'S' {
-                start = Some((x, y));
-                heightmap[(x, y)] = 'a';
-            } else if heightmap[(x, y)] == 'E' {
-                end = Some((x, y));
-                heightmap[(x, y)] = 'z';
-            }
-
-            if heightmap[(x, y)] == 'a' {
-                a_positions.push((x, y));
-            }
-        }
-    }
-
-    let heightmap = heightmap;
-    let end = end.unwrap();
-
-    let mut horizon: VecDeque<(usize, (usize, usize))> = VecDeque::new();
-
-    for start in a_positions {
-        horizon.push_back((0, start));
-    }
-
+fn solve(
+    heightmap: &Grid<char>,
+    mut horizon: VecDeque<(usize, (usize, usize))>,
+    end: (usize, usize),
+) -> usize {
     let mut visited: HashSet<(usize, usize)> = HashSet::default();
-    let mut best = usize::MAX;
 
     while let Some((cost, vertex)) = horizon.pop_front() {
+        if vertex == end {
+            return cost;
+        }
+
         if visited.contains(&vertex) {
             continue;
         }
@@ -50,15 +25,39 @@ pub fn run(input: &str) -> (Solution, Solution) {
                 horizon.push_back(((cost + 1), neighbour));
             }
         }
+    }
 
-        if vertex == end {
-            best = cost;
-            break;
+    unreachable!()
+}
+
+pub fn run(input: &str) -> (Solution, Solution) {
+    let mut heightmap: Grid<char> = input.lines().map(|line| line.chars()).collect();
+
+    let mut end = None;
+
+    let mut part_1_start = VecDeque::new();
+    let mut part_2_start = VecDeque::new();
+
+    for y in 0..heightmap.height() {
+        for x in 0..heightmap.width() {
+            if heightmap[(x, y)] == 'S' {
+                part_1_start.push_back((0, (x, y)));
+                heightmap[(x, y)] = 'a';
+            } else if heightmap[(x, y)] == 'E' {
+                end = Some((x, y));
+                heightmap[(x, y)] = 'z';
+            }
+
+            if heightmap[(x, y)] == 'a' {
+                part_2_start.push_back((0, (x, y)));
+            }
         }
     }
 
-    let result1 = 0;
-    let result2 = { best };
+    let end = end.unwrap();
+
+    let result1 = solve(&heightmap, part_1_start, end);
+    let result2 = solve(&heightmap, part_2_start, end);
 
     (result1.into(), result2.into())
 }
