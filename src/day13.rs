@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use nom::{
     branch::alt, bytes::complete::tag, combinator::map, multi::separated_list0,
     sequence::delimited, IResult,
@@ -12,19 +14,26 @@ enum Packet {
     List(Vec<Packet>),
 }
 
+impl Packet {
+    fn as_slice(&self) -> &[Packet] {
+        match self {
+            Packet::Int(_) => std::slice::from_ref(self),
+            Packet::List(list) => list.as_slice(),
+        }
+    }
+}
+
 impl Ord for Packet {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+    fn cmp(&self, other: &Self) -> Ordering {
         match (self, other) {
             (Packet::Int(a), Packet::Int(b)) => a.cmp(b),
-            (Packet::Int(_), _) => Packet::List(vec![self.clone()]).cmp(other),
-            (_, Packet::Int(_)) => self.cmp(&Packet::List(vec![other.clone()])),
-            (Packet::List(left), Packet::List(right)) => left.cmp(right),
+            (_, _) => self.as_slice().cmp(other.as_slice()),
         }
     }
 }
 
 impl PartialOrd for Packet {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
