@@ -1,5 +1,3 @@
-use std::cmp::Ordering;
-
 use nom::{
     branch::alt, bytes::complete::tag, combinator::map, multi::separated_list0,
     sequence::delimited, IResult,
@@ -20,24 +18,7 @@ impl Ord for Packet {
             (Packet::Int(a), Packet::Int(b)) => a.cmp(b),
             (Packet::Int(_), _) => Packet::List(vec![self.clone()]).cmp(other),
             (_, Packet::Int(_)) => self.cmp(&Packet::List(vec![other.clone()])),
-            (Packet::List(left), Packet::List(right)) => {
-                let mut left = left.into_iter();
-                let mut right = right.into_iter();
-
-                loop {
-                    match (left.next(), right.next()) {
-                        (None, None) => return Ordering::Equal,
-                        (Some(_), None) => return Ordering::Greater,
-                        (None, Some(_)) => return Ordering::Less,
-                        (Some(l), Some(r)) => {
-                            let comparison = l.cmp(r);
-                            if comparison != Ordering::Equal {
-                                return comparison;
-                            }
-                        }
-                    }
-                }
-            }
+            (Packet::List(left), Packet::List(right)) => left.cmp(right),
         }
     }
 }
