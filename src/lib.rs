@@ -5,6 +5,7 @@ use std::{
 };
 
 use itertools::Itertools;
+use nom::{combinator::map, IResult};
 
 #[macro_use]
 mod grid;
@@ -25,6 +26,7 @@ mod day10;
 mod day11;
 mod day12;
 mod day13;
+mod day14;
 
 const DAY_TABLE: &[fn(&str) -> (Solution, Solution)] = &[
     day01::run,
@@ -40,6 +42,7 @@ const DAY_TABLE: &[fn(&str) -> (Solution, Solution)] = &[
     day11::run,
     day12::run,
     day13::run,
+    day14::run,
 ];
 
 #[derive(Debug, PartialEq, Eq)]
@@ -114,4 +117,8 @@ pub fn get_expected_output(day: u32) -> (Solution, Solution) {
         .map(|result| result.parse().unwrap())
         .collect_tuple()
         .unwrap()
+}
+
+pub fn parse_usize(input: &str) -> IResult<&str, usize> {
+    map(nom::character::complete::u64, |n| n as usize)(input)
 }

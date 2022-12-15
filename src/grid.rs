@@ -107,6 +107,14 @@ impl<T> Grid<T> {
     pub fn flat_iter_mut(&mut self) -> slice::IterMut<'_, T> {
         self.grid.iter_mut()
     }
+
+    pub fn get(&self, (x, y): (usize, usize)) -> Option<&T> {
+        if (0..self.width()).contains(&x) && (0..self.height()).contains(&y) {
+            Some(&self.grid[y * self.width + x])
+        } else {
+            None
+        }
+    }
 }
 
 impl<T> Index<(usize, usize)> for Grid<T> {
