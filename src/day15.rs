@@ -27,6 +27,25 @@ fn manhattan(start: (isize, isize), end: (isize, isize)) -> isize {
     (start.0.abs_diff(end.0) + start.1.abs_diff(end.1)) as isize
 }
 
+const MAX_COORD: isize = 4000000;
+
+fn points_at_distance(
+    position: (isize, isize),
+    distance: isize,
+) -> impl Iterator<Item = (isize, isize)> {
+    let left = ((position.0 - distance)..=position.0)
+        .enumerate()
+        .flat_map(move |(i, x)| [(x, position.1 + i as isize), (x, position.1 - i as isize)]);
+
+    let right = ((position.0 + 1)..=(position.0 + distance))
+        .rev()
+        .enumerate()
+        .flat_map(move |(i, x)| [(x, position.1 + i as isize), (x, position.1 - i as isize)]);
+
+    left.chain(right)
+        .filter(|(x, y)| (0..=MAX_COORD).contains(&x) && (0..=MAX_COORD).contains(&y))
+}
+
 pub fn run(input: &str) -> (Solution, Solution) {
     let lines = input
         .lines()
@@ -58,11 +77,34 @@ pub fn run(input: &str) -> (Solution, Solution) {
     };
 
     let result2 = {
-        // Part 2
-        0
+        let mut result = None;
+
+        'outer: for &(sensor, beacon) in lines.iter() {
+            let distance = manhattan(sensor, beacon);
+
+            for point in points_at_distance(sensor, distance + 1) {
+                let mut found = false;
+
+                for &(sensor, beacon) in lines.iter() {
+                    if manhattan(sensor, point) <= manhattan(sensor, beacon) {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if !found {
+                    result = Some(point);
+                    break 'outer;
+                }
+            }
+        }
+
+        let result = result.unwrap();
+
+        result.0 * MAX_COORD + result.1
     };
 
-    (result1.into(), result2.into())
+    (result1.into(), (result2 as usize).into())
 }
 
 #[cfg(test)]
