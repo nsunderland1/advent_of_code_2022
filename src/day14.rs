@@ -72,7 +72,7 @@ pub fn run(input: &str) -> (Solution, Solution) {
         .unwrap();
 
     let mut cave = grid!['.'; width, height];
-    for line in lines {
+    for line in lines.iter() {
         for segment in line.windows(2) {
             for point in unordered_line_iterator(segment[0], segment[1]) {
                 cave[point] = '#';
@@ -83,15 +83,27 @@ pub fn run(input: &str) -> (Solution, Solution) {
     let starting_point = (500, 0);
 
     let result1 = {
-        let mut cave = cave.clone();
         let (count, leaked) = count_sand(&mut cave, starting_point);
         assert!(leaked);
         count
     };
 
+    let mut cave2 = grid!['.'; width + height + 1, height + 2];
+    for line in lines {
+        for segment in line.windows(2) {
+            for point in unordered_line_iterator(segment[0], segment[1]) {
+                cave2[point] = '#';
+            }
+        }
+    }
+    for x in 0..cave2.width() {
+        cave2[(x, height + 1)] = '#';
+    }
+
     let result2 = {
-        // Part 2
-        0
+        let (count, leaked) = count_sand(&mut cave2, starting_point);
+        assert!(!leaked);
+        count
     };
 
     (result1.into(), result2.into())
