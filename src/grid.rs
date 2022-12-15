@@ -9,9 +9,7 @@ use itertools::Itertools;
 #[macro_export]
 macro_rules! grid {
     [$e:expr; $width:expr, $height:expr] => {
-        ::core::iter::repeat_with(|| ::core::iter::repeat($e).take($width))
-            .take($height)
-            .collect::<$crate::grid::Grid<_>>()
+        $crate::grid::Grid::new_filled($e, $width, $height)
     };
 }
 
@@ -42,6 +40,21 @@ where
     pub fn new(width: usize, height: usize) -> Self {
         let mut grid = Vec::with_capacity(width * height);
         grid.resize_with(width * height, T::default);
+
+        Self {
+            width,
+            height,
+            grid,
+        }
+    }
+}
+
+impl<T> Grid<T>
+where
+    T: Clone,
+{
+    pub fn new_filled(element: T, width: usize, height: usize) -> Self {
+        let grid = vec![element; width * height];
 
         Self {
             width,
