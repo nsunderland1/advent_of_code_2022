@@ -42,14 +42,14 @@ impl Piece {
     }
 }
 
-fn shift_left(piece: Vec<(usize, usize)>, chamber: &[Vec<bool>]) -> Vec<(usize, usize)> {
+fn shift_left(piece: Vec<(usize, usize)>, chamber: &[u8]) -> Vec<(usize, usize)> {
     if let Some(next_piece) = piece
         .iter()
         .copied()
         .map(|(x, y)| {
             let x_next = x.checked_sub(1)?;
 
-            if !chamber[x_next][y] {
+            if chamber[y] & (1 << x_next) == 0 {
                 Some((x_next, y))
             } else {
                 None
@@ -63,14 +63,14 @@ fn shift_left(piece: Vec<(usize, usize)>, chamber: &[Vec<bool>]) -> Vec<(usize, 
     }
 }
 
-fn shift_right(piece: Vec<(usize, usize)>, chamber: &[Vec<bool>]) -> Vec<(usize, usize)> {
+fn shift_right(piece: Vec<(usize, usize)>, chamber: &[u8]) -> Vec<(usize, usize)> {
     if let Some(next_piece) = piece
         .iter()
         .copied()
         .map(|(x, y)| {
             let x_next = x.checked_add(1)?;
 
-            if x_next < chamber.len() && !chamber[x_next][y] {
+            if x_next < 7 && chamber[y] & (1 << x_next) == 0 {
                 Some((x_next, y))
             } else {
                 None
@@ -86,7 +86,7 @@ fn shift_right(piece: Vec<(usize, usize)>, chamber: &[Vec<bool>]) -> Vec<(usize,
 
 fn shift_down(
     piece: Vec<(usize, usize)>,
-    chamber: &[Vec<bool>],
+    chamber: &[u8],
 ) -> Result<Vec<(usize, usize)>, Vec<(usize, usize)>> {
     if let Some(next_piece) = piece
         .iter()
@@ -94,7 +94,7 @@ fn shift_down(
         .map(|(x, y)| {
             let y_next = y.checked_sub(1)?;
 
-            if !chamber[x][y_next] {
+            if chamber[y_next] & (1 << x) == 0 {
                 Some((x, y_next))
             } else {
                 None
@@ -139,7 +139,7 @@ pub fn run(input: &str) -> (Solution, Solution) {
     const NUM_PIECES: usize = 2022;
 
     // In the worst case, the tallest piece is 4 units tall, and has an initial gap of 3
-    let mut chamber: Vec<Vec<bool>> = vec![vec![false; 7 * NUM_PIECES]; 7];
+    let mut chamber: Vec<u8> = vec![0; 7 * NUM_PIECES];
 
     let mut cache = HashMap::<Key, Vec<Value>>::default();
 
@@ -181,7 +181,7 @@ pub fn run(input: &str) -> (Solution, Solution) {
                 });
 
             for (x, y) in squares {
-                chamber[x][y] = true;
+                chamber[y] |= 1 << x;
             }
         }
 
