@@ -16,7 +16,7 @@ fn parse_input(input: &str) -> IResult<&str, Vec<Shift>> {
     )))(input)
 }
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 enum Piece {
     Horizontal,
     Plus,
@@ -108,9 +108,21 @@ fn shift_down(
     }
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+struct Key {
+    piece: Piece,
+    jet_index: usize,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+struct Value {
+    height: usize,
+    piece_index: usize,
+}
+
 pub fn run(input: &str) -> (Solution, Solution) {
     let shifts = parse_input(input).unwrap().1;
-    let mut jets = shifts.iter().copied().cycle();
+    let mut jets = shifts.iter().copied().enumerate().cycle();
 
     let pieces = [
         Piece::Horizontal,
@@ -123,19 +135,24 @@ pub fn run(input: &str) -> (Solution, Solution) {
     .cycle();
 
     let mut height = 0;
-    let mut chamber: Vec<Vec<bool>> = vec![Vec::new(); 7];
 
     const NUM_PIECES: usize = 2022;
 
-    let result1 = {
-        for piece in pieces.take(NUM_PIECES) {
-            for column in chamber.iter_mut() {
-                column.resize(height + 8, false); // 3 gap + tallest piece has height 4
-            }
+    // In the worst case, the tallest piece is 4 units tall, and has an initial gap of 3
+    let mut chamber: Vec<Vec<bool>> = vec![vec![false; 7 * NUM_PIECES]; 7];
 
+    let mut cache = HashMap::<Key, Vec<Value>>::default();
+
+    let result1 = {
+        for (piece_index, piece) in pieces.take(NUM_PIECES).enumerate() {
             let mut squares = piece.initial_squares(height);
 
-            for shift in jets.by_ref() {
+            let piece_index = piece_index + 1;
+            let mut final_jet_index = None;
+
+            for (i, shift) in jets.by_ref() {
+                final_jet_index = Some(i);
+
                 squares = match shift {
                     Shift::Left => shift_left(squares, &chamber),
                     Shift::Right => shift_right(squares, &chamber),
@@ -152,6 +169,17 @@ pub fn run(input: &str) -> (Solution, Solution) {
 
             height = height.max(squares.iter().map(|&(_, y)| y).max().unwrap());
 
+            cache
+                .entry(Key {
+                    piece,
+                    jet_index: final_jet_index.unwrap(),
+                })
+                .or_insert_with(Vec::new)
+                .push(Value {
+                    height,
+                    piece_index,
+                });
+
             for (x, y) in squares {
                 chamber[x][y] = true;
             }
@@ -160,10 +188,29 @@ pub fn run(input: &str) -> (Solution, Solution) {
         height
     };
 
-    let result2 = {
-        // Part 2
-        0
-    };
+    const PART_2_NUM_PIECES: usize = 1_000_000_000_000;
+
+    let result2 = cache
+        .into_iter()
+        .find_map(|(_, values)| {
+            if values.len() < 2 {
+                return None;
+            };
+
+            let step = values[1].piece_index - values[0].piece_index;
+            let start = values[0].piece_index;
+
+            if (PART_2_NUM_PIECES - start) % step == 0 {
+                let start_height = values[0].height;
+                let step_height = values[1].height - values[0].height;
+
+                let num_steps = (PART_2_NUM_PIECES - start) / step;
+                Some(start_height + num_steps * step_height)
+            } else {
+                None
+            }
+        })
+        .unwrap();
 
     (result1.into(), result2.into())
 }
