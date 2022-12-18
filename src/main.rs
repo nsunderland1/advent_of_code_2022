@@ -8,8 +8,11 @@ use clap::Parser;
 enum Options {
     All,
     Today,
-    Day { day: u32 },
-    Save { day: u32 },
+    Day {
+        day: u32,
+        #[clap(short, long)]
+        save: bool,
+    },
 }
 
 fn current_day_december_2022() -> Option<u32> {
@@ -32,7 +35,7 @@ impl Options {
                     today.expect("This option only works from December 1st through 25th, 2022");
                 vec![today]
             }
-            Options::Day { day } | Options::Save { day } => {
+            Options::Day { day, save: _ } => {
                 assert!(*day <= today.unwrap_or(25), "You can't run a future day!");
                 vec![*day]
             }
@@ -56,10 +59,12 @@ fn main() {
         println!("Ran in {runtime:?}");
         total += runtime;
 
-        if let Options::Save { .. } = options {
+        if let Options::Day { save: true, .. } = options {
             let output_file = output_file_path(day);
-            std::fs::write(output_file, format!("{part1} {part2}"))
+            std::fs::write(&output_file, format!("{part1} {part2}"))
                 .expect("Failed to write to output file");
+
+            println!("Saved results to {}", output_file.display());
         }
     }
     println!("Total time: {total:?}");
