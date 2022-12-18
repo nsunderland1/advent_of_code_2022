@@ -1,4 +1,4 @@
-use std::collections::{BTreeSet, VecDeque};
+use std::collections::VecDeque;
 
 #[allow(unused)]
 use crate::prelude::*;
@@ -60,35 +60,22 @@ pub fn run(input: &str) -> (Solution, Solution) {
         })
     };
 
-    let mut queue = HashSet::default();
-    queue.insert(min);
+    let mut queue = VecDeque::new();
+    queue.push_back(min);
+    reachable.insert(min);
 
-    while let Some(coord) = queue.iter().copied().next() {
-        queue.remove(&coord);
-        reachable.insert(coord);
+    let mut result2 = 0;
 
+    while let Some(coord) = queue.pop_front() {
         for neighbour in neighbours(coord) {
-            if !reachable.contains(&neighbour) && !coords.contains(&neighbour) {
-                queue.insert(neighbour);
+            if coords.contains(&neighbour) {
+                result2 += 1;
+            } else if !reachable.contains(&neighbour) {
+                queue.push_back(neighbour);
+                reachable.insert(neighbour);
             }
         }
     }
-
-    let neighbours_unbounded = |(x, y, z): (isize, isize, isize)| {
-        [-1, 1]
-            .into_iter()
-            .flat_map(move |shift| [(x + shift, y, z), (x, y + shift, z), (x, y, z + shift)])
-    };
-
-    let result2 = coords
-        .iter()
-        .copied()
-        .map(|coord| {
-            neighbours_unbounded(coord)
-                .filter(|neighbour| reachable.contains(neighbour))
-                .count()
-        })
-        .sum::<usize>();
 
     (result1.into(), result2.into())
 }
