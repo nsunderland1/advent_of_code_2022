@@ -95,16 +95,29 @@ impl IndexMut<(isize, isize, isize)> for Space {
     }
 }
 
+fn parse_int(mut bytes: &[u8], delimiter: u8) -> (&[u8], isize) {
+    let mut num: isize = 0;
+
+    while bytes[0] != delimiter {
+        num *= 10;
+        num += (bytes[0] - b'0') as isize;
+        bytes = &bytes[1..];
+    }
+
+    (&bytes[1..], num)
+}
+
 pub fn run(input: &str) -> (Solution, Solution) {
-    let coords: HashSet<(isize, isize, isize)> = input
-        .lines()
-        .map(|line| {
-            line.split(',')
-                .map(|num| num.parse().unwrap())
-                .collect_tuple()
-                .unwrap()
-        })
-        .collect();
+    let mut coords = Vec::new();
+    let mut bytes = input.as_bytes();
+
+    while !bytes.is_empty() {
+        let (x, y, z);
+        (bytes, x) = parse_int(bytes, b',');
+        (bytes, y) = parse_int(bytes, b',');
+        (bytes, z) = parse_int(bytes, b'\n');
+        coords.push((x, y, z));
+    }
 
     let min_x = coords.iter().copied().map(|(x, _, _)| x).min().unwrap() - 1;
     let min_y = coords.iter().copied().map(|(_, y, _)| y).min().unwrap() - 1;
@@ -123,15 +136,10 @@ pub fn run(input: &str) -> (Solution, Solution) {
     }
 
     let result1 = coords
-        .iter()
-        .copied()
-        .map(|coord| {
-            space
-                .neighbours(coord)
-                .filter(|&neighbour| space[neighbour] != Fill::Lava)
-                .count()
-        })
-        .sum::<usize>();
+        .into_iter()
+        .flat_map(|coord| space.neighbours(coord))
+        .filter(|&neighbour| space[neighbour] != Fill::Lava)
+        .count();
 
     let mut queue = VecDeque::with_capacity(space.len());
     queue.push_back(min);
