@@ -36,6 +36,7 @@ fn parse_line(input: &str) -> IResult<&str, Valve<'_>> {
 }
 
 const TIME: usize = 30;
+const TIME_2: usize = 26;
 
 fn solve<'a, 'b>(
     current_valve: &'a str,
@@ -88,15 +89,34 @@ pub fn run(input: &str) -> (Solution, Solution) {
         .map(|valve| (valve.label, valve))
         .collect();
 
+    let mut cache = HashMap::default();
+
     let result1 = {
         let mut activated_set = BTreeSet::default();
-        let mut cache = HashMap::default();
         solve("AA", TIME, &mut activated_set, &valves, &mut cache)
     };
 
     let result2 = {
-        // Part 2
-        0
+        let nonzero_valves: BTreeSet<&str> = valves
+            .values()
+            .filter(|valve| valve.rate > 0)
+            .map(|valve| valve.label)
+            .collect();
+
+        nonzero_valves
+            .iter()
+            .copied()
+            .powerset()
+            .map(|subset| {
+                let mut me: BTreeSet<&str> = subset.into_iter().collect();
+                let mut elephant: BTreeSet<&str> =
+                    nonzero_valves.difference(&me).copied().collect();
+
+                solve("AA", TIME_2, &mut me, &valves, &mut cache)
+                    + solve("AA", TIME_2, &mut elephant, &valves, &mut cache)
+            })
+            .max()
+            .unwrap()
     };
 
     (result1.into(), result2.into())
