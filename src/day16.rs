@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::cmp::Reverse;
 
 use nom::{
     branch::alt, bytes::complete::tag, character::complete::alpha1, combinator::map,
@@ -8,19 +8,49 @@ use nom::{
 #[allow(unused)]
 use crate::prelude::*;
 
-struct Valve<'a> {
-    label: &'a str,
-    rate: usize,
-    tunnels: Vec<&'a str>,
+#[derive(Debug)]
+struct Valve<Label> {
+    label: Label,
+    rate: u8,
+    tunnels: Vec<Label>,
 }
 
-fn parse_line(input: &str) -> IResult<&str, Valve<'_>> {
+struct Cache {
+    store: Vec<Option<u16>>,
+}
+
+impl Cache {
+    fn new() -> Self {
+        let max_cache_entries = ((1 << 6) - 1) // valve label
+        * ((1 << 5) - 1) // time remaining
+        * ((1 << 15) - 1) // visited set
+        * 4; // I'm gonna be honest, idk where this came from
+
+        Self {
+            store: vec![None; max_cache_entries],
+        }
+    }
+
+    fn index(label: u8, time_left: u8, activated: u16) -> usize {
+        ((activated as usize) << 11) | ((label as usize) << 5) | (time_left as usize)
+    }
+
+    fn get(&self, label: u8, time_left: u8, activated: u16) -> Option<u16> {
+        self.store[Self::index(label, time_left, activated)]
+    }
+
+    fn insert(&mut self, label: u8, time_left: u8, activated: u16, value: u16) {
+        self.store[Self::index(label, time_left, activated)] = Some(value);
+    }
+}
+
+fn parse_line<'a>(input: &'a str) -> IResult<&'a str, Valve<&'a str>> {
     map(
         tuple((
             tag("Valve "),
             alpha1,
             tag(" has flow rate="),
-            parse_usize,
+            nom::character::complete::u8,
             alt((
                 tag("; tunnels lead to valves "),
                 tag("; tunnel leads to valve "),
@@ -35,89 +65,89 @@ fn parse_line(input: &str) -> IResult<&str, Valve<'_>> {
     )(input)
 }
 
-const TIME: usize = 30;
-const TIME_2: usize = 26;
+const TIME: u8 = 30;
+const TIME_2: u8 = 26;
 
-fn solve<'a, 'b>(
-    current_valve: &'a str,
-    time_left: usize,
-    activated_set: &'b mut BTreeSet<&'a str>,
-    valves: &HashMap<&'a str, Valve<'a>>,
-    cache: &mut HashMap<(&'a str, usize), HashMap<BTreeSet<&'a str>, usize>>,
-) -> usize {
+fn solve(
+    label: u8,
+    time_left: u8,
+    activated_set: u16,
+    valves: &[Valve<u8>],
+    cache: &mut Cache,
+) -> u16 {
     if time_left == 0 {
         return 0;
     }
 
-    if let Some(cache_entry) = cache.get(&(current_valve, time_left)) {
-        if let Some(&cache_entry) = cache_entry.get(activated_set) {
-            return cache_entry;
-        }
+    if let Some(cache_entry) = cache.get(label, time_left, activated_set) {
+        return cache_entry;
     }
 
-    let current_valve = valves.get(current_valve).unwrap();
+    let current_valve = &valves[label as usize];
 
     let mut best = 0;
 
-    if current_valve.rate > 0 && !activated_set.contains(current_valve.label) {
-        activated_set.insert(current_valve.label);
+    if current_valve.rate > 0 && activated_set & (1 << label) == 0 {
+        let new_set = activated_set | (1 << label);
         let time_left = time_left - 1;
 
-        let subresult = solve(current_valve.label, time_left, activated_set, valves, cache);
-        best = best.max(subresult + time_left * current_valve.rate);
-
-        activated_set.remove(current_valve.label);
+        let subresult = solve(label, time_left, new_set, valves, cache);
+        best = best.max(subresult + (time_left as u16) * (current_valve.rate as u16));
     }
 
-    for neighbour in current_valve.tunnels.iter() {
-        let time_left = time_left - 1;
-        best = best.max(solve(neighbour, time_left, activated_set, valves, cache));
+    for &neighbour in current_valve.tunnels.iter() {
+        best = best.max(solve(
+            neighbour,
+            time_left - 1,
+            activated_set,
+            valves,
+            cache,
+        ));
     }
 
-    cache
-        .entry((current_valve.label, time_left))
-        .or_default()
-        .insert(activated_set.clone(), best);
+    cache.insert(label, time_left, activated_set, best);
 
     best
 }
 
 pub fn run(input: &str) -> (Solution, Solution) {
-    let valves: HashMap<_, _> = input
+    let valves_lookup: HashMap<&str, (u8, Valve<&str>)> = input
         .lines()
         .map(|line| parse_line(line).unwrap().1)
-        .map(|valve| (valve.label, valve))
+        .sorted_by_key(|valve| Reverse(valve.rate))
+        .enumerate()
+        .map(|(index, valve)| (valve.label, (index as u8, valve)))
         .collect();
 
-    let mut cache = HashMap::default();
+    let valves: Vec<Valve<u8>> = valves_lookup
+        .iter()
+        .map(|(_, (index, valve))| Valve {
+            label: *index,
+            rate: valve.rate,
+            tunnels: valve
+                .tunnels
+                .iter()
+                .map(|label| valves_lookup.get(label).unwrap().0)
+                .collect(),
+        })
+        .sorted_by_key(|valve| valve.label)
+        .collect();
 
-    let result1 = {
-        let mut activated_set = BTreeSet::default();
-        solve("AA", TIME, &mut activated_set, &valves, &mut cache)
-    };
+    let aa = valves_lookup.get("AA").unwrap().0;
 
-    let result2 = {
-        let nonzero_valves: BTreeSet<&str> = valves
-            .values()
-            .filter(|valve| valve.rate > 0)
-            .map(|valve| valve.label)
-            .collect();
+    let mut cache = Cache::new();
 
-        nonzero_valves
-            .iter()
-            .copied()
-            .powerset()
-            .map(|subset| {
-                let mut me: BTreeSet<&str> = subset.into_iter().collect();
-                let mut elephant: BTreeSet<&str> =
-                    nonzero_valves.difference(&me).copied().collect();
+    let result1 = solve(aa, TIME, 0, &valves, &mut cache) as usize;
 
-                solve("AA", TIME_2, &mut me, &valves, &mut cache)
-                    + solve("AA", TIME_2, &mut elephant, &valves, &mut cache)
-            })
-            .max()
-            .unwrap()
-    };
+    let result2 = (0u16..((1 << 15) - 1))
+        .map(|me| {
+            let elephant = !me;
+
+            solve(aa, TIME_2, me, &valves, &mut cache)
+                + solve(aa, TIME_2, elephant, &valves, &mut cache)
+        })
+        .max()
+        .unwrap() as usize;
 
     (result1.into(), result2.into())
 }
