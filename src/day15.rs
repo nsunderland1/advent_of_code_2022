@@ -1,3 +1,5 @@
+use std::{cmp::Ordering, convert, ops::RangeInclusive};
+
 use nom::{bytes::complete::tag, combinator::map, sequence::tuple, IResult};
 
 #[allow(unused)]
@@ -52,10 +54,10 @@ pub fn run(input: &str) -> (Solution, Solution) {
         .map(|line| parse_line(line).unwrap().1)
         .collect_vec();
 
-    const TARGET_Y: isize = 10;
+    const TARGET_Y: isize = 2_000_000;
 
     let result1 = {
-        let mut excluded = HashSet::<isize>::default();
+        let mut excluded_ranges: Vec<RangeInclusive<isize>> = Vec::with_capacity(lines.len());
 
         for &(sensor, beacon) in lines.iter() {
             let distance = manhattan(sensor, beacon);
@@ -68,12 +70,53 @@ pub fn run(input: &str) -> (Solution, Solution) {
             let min_x = sensor.0 - distance + y_target_distance;
             let max_x = sensor.0 + distance - y_target_distance;
 
-            for x in min_x..=max_x {
-                excluded.insert(x);
-            }
+            let start_index = excluded_ranges.binary_search_by(|range| {
+                if min_x < *range.start() {
+                    Ordering::Greater
+                } else if min_x > *range.end() {
+                    Ordering::Less
+                } else {
+                    Ordering::Equal
+                }
+            });
+
+            let end_index = excluded_ranges.binary_search_by(|range| {
+                if max_x < *range.start() {
+                    Ordering::Greater
+                } else if max_x > *range.end() {
+                    Ordering::Less
+                } else {
+                    Ordering::Equal
+                }
+            });
+
+            let (start, end) = if start_index == end_index {
+                if let (Err(start), Err(_)) = (start_index, end_index) {
+                    excluded_ranges.insert(start, min_x..=max_x);
+                }
+
+                (
+                    start_index.unwrap_or_else(convert::identity),
+                    end_index.unwrap_or_else(convert::identity),
+                )
+            } else {
+                (
+                    start_index.unwrap_or_else(|start| start),
+                    end_index.unwrap_or_else(|end| end - 1),
+                )
+            };
+
+            excluded_ranges[start] =
+                min_x.min(*excluded_ranges[start].start())..=max_x.max(*excluded_ranges[end].end());
+
+            for _ in excluded_ranges.drain((start + 1)..=end) {}
         }
 
-        excluded.len() - 1 // somehow I have an off by one, oops :)
+        excluded_ranges
+            .into_iter()
+            .map(|range| range.end() - range.start() + 1)
+            .sum::<isize>() as usize
+            - 1
     };
 
     let result2 = {
