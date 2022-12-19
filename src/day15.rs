@@ -29,29 +29,41 @@ fn manhattan(start: (isize, isize), end: (isize, isize)) -> isize {
     (start.0.abs_diff(end.0) + start.1.abs_diff(end.1)) as isize
 }
 
-const MAX_COORD: isize = 4000000;
+const MAX_COORD: isize = 4_000_000;
 
-fn points_at_distance(
-    position: (isize, isize),
-    distance: isize,
-) -> impl Iterator<Item = (isize, isize)> {
-    let left = ((position.0 - distance)..=position.0)
-        .enumerate()
-        .flat_map(move |(i, x)| [(x, position.1 + i as isize), (x, position.1 - i as isize)]);
+fn intersect(
+    up_start: (isize, isize),
+    up_end: (isize, isize),
+    down_start: (isize, isize),
+    down_end: (isize, isize),
+) -> Option<(isize, isize)> {
+    // up: x + a
+    // down: -x + b
+    // x + a == -x + b
+    // 2x = b - a
+    let a = up_start.1 - up_start.0;
+    let b = down_start.1 + down_start.0;
 
-    let right = ((position.0 + 1)..=(position.0 + distance))
-        .rev()
-        .enumerate()
-        .flat_map(move |(i, x)| [(x, position.1 + i as isize), (x, position.1 - i as isize)]);
+    if (b - a) % 2 != 0 {
+        return None;
+    }
 
-    left.chain(right)
-        .filter(|(x, y)| (0..=MAX_COORD).contains(&x) && (0..=MAX_COORD).contains(&y))
+    let intersection_x = (b - a) / 2;
+
+    if (up_start.0..=up_end.0).contains(&intersection_x)
+        && (down_start.0..=down_end.0).contains(&intersection_x)
+    {
+        Some((intersection_x, up_start.1 + (intersection_x - up_start.0)))
+    } else {
+        None
+    }
 }
 
 pub fn run(input: &str) -> (Solution, Solution) {
     let lines = input
         .lines()
         .map(|line| parse_line(line).unwrap().1)
+        .map(|(sensor, beacon)| (sensor, beacon, manhattan(sensor, beacon)))
         .collect_vec();
 
     const TARGET_Y: isize = 2_000_000;
@@ -59,9 +71,7 @@ pub fn run(input: &str) -> (Solution, Solution) {
     let result1 = {
         let mut excluded_ranges: Vec<RangeInclusive<isize>> = Vec::with_capacity(lines.len());
 
-        for &(sensor, beacon) in lines.iter() {
-            let distance = manhattan(sensor, beacon);
-
+        for &(sensor, _, distance) in lines.iter() {
             let y_target_distance = sensor.1.abs_diff(TARGET_Y) as isize;
             if y_target_distance > distance {
                 continue;
@@ -101,7 +111,7 @@ pub fn run(input: &str) -> (Solution, Solution) {
                 )
             } else {
                 (
-                    start_index.unwrap_or_else(|start| start),
+                    start_index.unwrap_or_else(convert::identity),
                     end_index.unwrap_or_else(|end| end - 1),
                 )
             };
@@ -120,29 +130,55 @@ pub fn run(input: &str) -> (Solution, Solution) {
     };
 
     let result2 = {
-        let mut result = None;
+        let diamonds: Vec<[(isize, isize); 4]> = lines
+            .iter()
+            .map(|&(sensor, _, distance)| {
+                [
+                    (sensor.0 - distance - 1, sensor.1),
+                    (sensor.0, sensor.1 + distance + 1),
+                    (sensor.0 + distance + 1, sensor.1),
+                    (sensor.0, sensor.1 - distance - 1),
+                ]
+            })
+            .collect();
 
-        'outer: for &(sensor, beacon) in lines.iter() {
-            let distance = manhattan(sensor, beacon);
+        let result = diamonds
+            .iter()
+            .enumerate()
+            .cartesian_product(diamonds.iter().enumerate())
+            .find_map(|((i, a), (j, b))| {
+                if i == j {
+                    return None;
+                }
 
-            for point in points_at_distance(sensor, distance + 1) {
-                let mut found = false;
+                let a_up = [(a[0], a[1]), (a[3], a[2])];
+                let a_down = [(a[0], a[3]), (a[1], a[2])];
 
-                for &(sensor, beacon) in lines.iter() {
-                    if manhattan(sensor, point) <= manhattan(sensor, beacon) {
-                        found = true;
-                        break;
+                let b_up = [(b[0], b[1]), (b[3], b[2])];
+                let b_down = [(b[0], b[3]), (b[1], b[2])];
+
+                Iterator::chain(
+                    a_up.into_iter().cartesian_product(b_down),
+                    b_up.into_iter().cartesian_product(a_down),
+                )
+                .find_map(|(up, down)| {
+                    let intersection = intersect(up.0, up.1, down.0, down.1)?;
+                    if !(0..=MAX_COORD).contains(&intersection.0)
+                        || !(0..=MAX_COORD).contains(&intersection.1)
+                    {
+                        return None;
                     }
-                }
 
-                if !found {
-                    result = Some(point);
-                    break 'outer;
-                }
-            }
-        }
+                    for &(sensor, _, distance) in lines.iter() {
+                        if manhattan(sensor, intersection) <= distance {
+                            return None;
+                        }
+                    }
 
-        let result = result.unwrap();
+                    Some(intersection)
+                })
+            })
+            .unwrap();
 
         result.0 * MAX_COORD + result.1
     };
