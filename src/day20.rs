@@ -19,16 +19,8 @@ pub fn run(input: &str) -> (Solution, Solution) {
                     .0;
 
                 let shift = input[current_index].1;
-                let shift = (shift.abs() % (input.len() as isize - 1)) * shift.signum();
-
-                let mut target_index = (current_index as isize) + shift;
-                if target_index < 0 {
-                    target_index += input.len() as isize - 1;
-                }
-                if target_index >= input.len() as isize {
-                    target_index %= input.len() as isize - 1;
-                }
-                let target_index = target_index as usize;
+                let target_index =
+                    (current_index as isize + shift).rem_euclid(input.len() as isize - 1) as usize;
 
                 let start = std::cmp::min(current_index, target_index);
                 let end = std::cmp::max(current_index, target_index);
