@@ -4,38 +4,40 @@ use crate::prelude::*;
 pub fn run(input: &str) -> (Solution, Solution) {
     let mut input = input
         .lines()
-        .map(|line| line.parse::<isize>().unwrap())
+        .map(|line| line.parse::<isize>().unwrap() * 811589153)
         .enumerate()
         .collect_vec();
 
     let result1 = {
-        for i in 0..input.len() {
-            let current_index = input
-                .iter()
-                .enumerate()
-                .find(|(_, (original_index, _))| *original_index == i)
-                .unwrap()
-                .0;
+        for _ in 0..10 {
+            for i in 0..input.len() {
+                let current_index = input
+                    .iter()
+                    .enumerate()
+                    .find(|(_, (original_index, _))| *original_index == i)
+                    .unwrap()
+                    .0;
 
-            let shift = input[current_index].1;
-            let shift = (shift.abs() % (input.len() as isize - 1)) * shift.signum();
+                let shift = input[current_index].1;
+                let shift = (shift.abs() % (input.len() as isize - 1)) * shift.signum();
 
-            let mut target_index = (current_index as isize) + shift;
-            if target_index < 0 {
-                target_index += input.len() as isize - 1;
-            }
-            if target_index >= input.len() as isize {
-                target_index %= input.len() as isize - 1;
-            }
-            let target_index = target_index as usize;
+                let mut target_index = (current_index as isize) + shift;
+                if target_index < 0 {
+                    target_index += input.len() as isize - 1;
+                }
+                if target_index >= input.len() as isize {
+                    target_index %= input.len() as isize - 1;
+                }
+                let target_index = target_index as usize;
 
-            let start = std::cmp::min(current_index, target_index);
-            let end = std::cmp::max(current_index, target_index);
+                let start = std::cmp::min(current_index, target_index);
+                let end = std::cmp::max(current_index, target_index);
 
-            if current_index == start {
-                input[start..=end].rotate_left(1);
-            } else {
-                input[start..=end].rotate_right(1);
+                if current_index == start {
+                    input[start..=end].rotate_left(1);
+                } else {
+                    input[start..=end].rotate_right(1);
+                }
             }
         }
 
