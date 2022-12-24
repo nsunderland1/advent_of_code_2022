@@ -24,7 +24,7 @@ impl<T: Display> Display for Grid<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for y in 0..self.height() {
             for x in 0..self.width() {
-                write!(f, "{} ", self[(x, y)])?;
+                write!(f, "{}", self[(x, y)])?;
             }
             writeln!(f)?;
         }
