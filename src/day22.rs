@@ -88,6 +88,43 @@ pub fn run(input: &str) -> (Solution, Solution) {
         row_ranges.push((start as isize)..=(end as isize));
     }
 
+    // We're gonna hardcode all this stuff cause who has time to do it programmatically
+    let mut row_start_wraps = Vec::with_capacity(game_map.height());
+    let mut row_end_wraps = Vec::with_capacity(game_map.height());
+
+    for y in 0..50 {
+        row_start_wraps.push((RIGHT, (0, 150 - y - 1)));
+        row_end_wraps.push((LEFT, (99, 150 - y - 1)));
+    }
+    for y in 50..100 {
+        row_start_wraps.push((DOWN, (y - 50, 100)));
+        row_end_wraps.push((UP, (y - 50 + 100, 49)));
+    }
+    for y in 100..150 {
+        row_start_wraps.push((RIGHT, (50, 150 - y - 1)));
+        row_end_wraps.push((LEFT, (149, 150 - y - 1)));
+    }
+    for y in 150..200 {
+        row_start_wraps.push((DOWN, (y - 150 + 50, 0)));
+        row_end_wraps.push((UP, (y - 150 + 50, 149)));
+    }
+
+    let mut column_start_wraps = Vec::with_capacity(game_map.width());
+    let mut column_end_wraps = Vec::with_capacity(game_map.width());
+
+    for x in 0..50 {
+        column_start_wraps.push((RIGHT, (50, (x + 50))));
+        column_end_wraps.push((DOWN, (x + 100, 0)));
+    }
+    for x in 50..100 {
+        column_start_wraps.push((RIGHT, (0, x - 50 + 150)));
+        column_end_wraps.push((LEFT, (50, x - 50 + 150)));
+    }
+    for x in 100..150 {
+        column_start_wraps.push((UP, (x - 100, 199)));
+        column_end_wraps.push((LEFT, (99, x - 100 + 50)));
+    }
+
     let mut column_ranges = Vec::with_capacity(game_map.width());
     for x in 0..game_map.width() {
         let start = (0..game_map.height())
@@ -159,8 +196,60 @@ pub fn run(input: &str) -> (Solution, Solution) {
     };
 
     let result2 = {
-        // Part 2
-        0
+        let mut orientation = RIGHT;
+
+        let start_x = row_ranges[0]
+            .find(|&x| game_map[(x as usize, 0)] == Square::Open)
+            .unwrap();
+
+        let mut position = (start_x as isize, 0);
+
+        for next_move in moves.iter().copied() {
+            match next_move {
+                Move::Left => orientation = (orientation.1, -orientation.0),
+                Move::Right => orientation = (-orientation.1, orientation.0),
+                Move::Advance(n) => {
+                    for _ in 0..n {
+                        let mut next_position =
+                            (position.0 + orientation.0, position.1 + orientation.1);
+                        let mut next_orientation = orientation;
+
+                        let current_row_range = row_ranges[position.1 as usize].clone();
+                        let current_column_range = column_ranges[position.0 as usize].clone();
+
+                        if orientation == LEFT && position.0 == *current_row_range.start() {
+                            (next_orientation, next_position) =
+                                row_start_wraps[position.1 as usize];
+                        } else if orientation == RIGHT && position.0 == *current_row_range.end() {
+                            (next_orientation, next_position) = row_end_wraps[position.1 as usize];
+                        } else if orientation == UP && position.1 == *current_column_range.start() {
+                            (next_orientation, next_position) =
+                                column_start_wraps[position.0 as usize];
+                        } else if orientation == DOWN && position.1 == *current_column_range.end() {
+                            (next_orientation, next_position) =
+                                column_end_wraps[position.0 as usize];
+                        }
+
+                        if game_map[(next_position.0 as usize, next_position.1 as usize)]
+                            == Square::Open
+                        {
+                            orientation = next_orientation;
+                            position = next_position;
+                        }
+                    }
+                }
+            }
+        }
+
+        let facing = match orientation {
+            RIGHT => 0,
+            DOWN => 1,
+            LEFT => 2,
+            UP => 3,
+            _ => unreachable!(),
+        };
+
+        (1000 * (position.1 + 1) + 4 * (position.0 + 1) + facing) as usize
     };
 
     (result1.into(), result2.into())

@@ -87,8 +87,8 @@ pub fn run(input: &str) -> (Solution, Solution) {
                                     }
 
                                     let Square::Open(next_blizzards) = &mut next_map[next_position] else {
-                                    unreachable!();
-                                };
+                                        unreachable!();
+                                    };
                                     next_blizzards.push(blizzard);
                                 }
                             }
